@@ -34,7 +34,7 @@ import static haven.Inventory.invsq;
 import haven.automation.Discord;
 import haven.automation.ErrorSysMsgCallback;
 import haven.automation.PickForageable;
-import haven.livestock.LivestockManager;
+//import haven.livestock.LivestockManager;
 import haven.purus.BotUtils;
 import haven.purus.ItemClickCallback;
 import haven.purus.pbot.PBotAPI;
@@ -113,7 +113,7 @@ public class GameUI extends ConsoleHost implements Console.Directory {
     public CraftHistoryBelt histbelt;
     private ErrorSysMsgCallback errmsgcb;
     public StudyWnd studywnd;
-    public LivestockManager livestockwnd;
+    //public LivestockManager livestockwnd;
     public ItemClickCallback itemClickCallback;
     public CraftWindow makewnd;
     public ActWindow craftlist, buildlist, actlist;
@@ -226,9 +226,9 @@ public class GameUI extends ConsoleHost implements Console.Directory {
         timerswnd.hide();
         add(timerswnd, new Coord(HavenPanel.w / 2 - timerswnd.sz.x / 2, 100));
 
-        livestockwnd = new LivestockManager();
+        /*livestockwnd = new LivestockManager();
         livestockwnd.hide();
-        add(livestockwnd, new Coord(HavenPanel.w / 2 - timerswnd.sz.x / 2, 100));
+        add(livestockwnd, new Coord(HavenPanel.w / 2 - timerswnd.sz.x / 2, 100));*/
 
         quickslots = new QuickSlotsWdg();
         if (!Config.quickslots)

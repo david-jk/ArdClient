@@ -712,10 +712,10 @@ public class MenuGrid extends Widget {
             new Thread(new ButcherFish(gui), "ButcherFish").start();
         } else if (ad[1].equals("rope")) {
             new Thread(new LeashAnimal(gui), "LeashAnimal").start();
-        } else if (ad[1].equals("livestock")) {
+        } /*else if (ad[1].equals("livestock")) {
             gui.livestockwnd.show(!gui.livestockwnd.visible);
             gui.livestockwnd.raise();
-        } else if (ad[1].equals("shoo")) {
+        }*/ else if (ad[1].equals("shoo")) {
             new Thread(new Shoo(gui), "Shoo").start();
         } else if (ad[1].equals("Coracleslol")) {
             new Thread(new Coracleslol(gui), "Coracleslol").start();
