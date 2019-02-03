@@ -122,6 +122,7 @@ public class MCache {
         private int olseq = -1;
         private final Cut cuts[];
         private Collection<Gob>[] fo = null;
+        public byte[] msgBuf=null;
 
         private class Cut {
             MapMesh mesh;
@@ -314,6 +315,7 @@ public class MCache {
         }
 
         public void fill(Message msg) {
+            msgBuf=msg.getRemainingBuffer();
             String mmname = msg.string().intern();
             if (mmname.equals(""))
                 mnm = null;

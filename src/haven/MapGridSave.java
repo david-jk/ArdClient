@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 
@@ -42,13 +44,13 @@ public class MapGridSave {
 
             BufferedImage img = drawmap(MCache.cmaps);
             if (img != null) {
-                save(img);
+                save(img,g.msgBuf);
                 QualityLogger.logMapTileSave(map,g,mgs,session);
             }
         }
     }
 
-    public void save(BufferedImage img) {
+    public void save(BufferedImage img,byte[] bindata) {
         Coord normc = g.gc.sub(mgs);
 
         Long knownId = sessionIds.get(normc);
@@ -59,9 +61,11 @@ public class MapGridSave {
             throw new Loading();
 
         String fileName = String.format("map/%s/tile_%d_%d.png", session, normc.x, normc.y);
+        String binFileName = String.format("map/%s/tile_%d_%d.bin", session, normc.x, normc.y);
         try {
             File outputfile = new File(fileName);
             ImageIO.write(img, "png", outputfile);
+            if (bindata != null)Files.write(Paths.get(binFileName), bindata);
         } catch (IOException e) {
             return;
         }

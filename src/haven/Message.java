@@ -27,7 +27,7 @@
 package haven;
 
 import java.awt.Color;
-import java.util.ArrayList;
+import java.util.*;
 
 public abstract class Message {
     public static final int T_END = 0;
@@ -432,6 +432,10 @@ public abstract class Message {
             }
         }
         return(this);
+    }
+
+    public byte[] getRemainingBuffer() {
+        return Arrays.copyOfRange(rbuf,rh,rt);
     }
 
     public int peekrbuf(int i) {
