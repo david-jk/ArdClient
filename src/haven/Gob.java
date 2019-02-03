@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.List;
 
 public class Gob implements Sprite.Owner, Skeleton.ModOwner, Rendered {
+    public long tag=-1;
     public Coord2d rc;
     public Coord sc;
     public Coord3f sczu;
@@ -227,6 +228,7 @@ public class Gob implements Sprite.Owner, Skeleton.ModOwner, Rendered {
         this.id = id;
         this.frame = frame;
         loc.tick();
+        QualityLogger.logGobCreation(this);
     }
 
     public Gob(Glob glob, Coord2d c) {
@@ -245,6 +247,7 @@ public class Gob implements Sprite.Owner, Skeleton.ModOwner, Rendered {
             if (ol.spr == null) {
                 try {
                     ol.spr = Sprite.create(this, ol.res.get(), ol.sdt.clone());
+                    QualityLogger.logSpriteCreation(this,ol.res.get().name,ol.res.getClass().getName());
                 } catch (Loading e) {
                 }
             } else {

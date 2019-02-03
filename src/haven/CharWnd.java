@@ -517,22 +517,28 @@ public class CharWnd extends Window {
         }
 
         public void tick(double dt) {
-	    if((attr.base != cbv) || (attr.comp != ccv)) {
-		cbv = attr.base; ccv = attr.comp;
-		Color c = Color.WHITE;
-		if(ccv > cbv) {
-		    c = buff;
-		    tooltip = Text.render(String.format("%d + %d", cbv, ccv - cbv));
-		} else if(ccv < cbv) {
-		    c = debuff;
-		    tooltip = Text.render(String.format("%d - %d", cbv, cbv - ccv));
-		} else {
-		    tooltip = null;
-		}
-		ct = attrf.render(Integer.toString(ccv), c);
-	    }
-	    if((lvlt > 0.0) && ((lvlt -= dt) < 0))
+            if ((attr.base != cbv) || (attr.comp != ccv)) {
+                cbv = attr.base; ccv = attr.comp;
+                Color c = Color.WHITE;
+                if(ccv > cbv) {
+                    c = buff;
+                    tooltip = Text.render(String.format("%d + %d", cbv, ccv - cbv));
+                } else if(ccv < cbv) {
+                    c = debuff;
+                    tooltip = Text.render(String.format("%d - %d", cbv, cbv - ccv));
+                } else {
+                    tooltip = null;
+                }
+                ct = attrf.render(Integer.toString(ccv), c);
+            }
+            if ((lvlt > 0.0) && ((lvlt -= dt) < 0))
                 lvlt = 0.0;
+
+            if ((attr.base != cbv) || (attr.comp != ccv)) {
+                QualityLogger.logPlayerAttribute(nm,this.attr.base,this.attr.comp);
+                cbv = attr.base;
+                ccv = attr.comp;
+            }
         }
 
         public void draw(GOut g) {
@@ -622,9 +628,10 @@ public class CharWnd extends Window {
 
         public void tick(double dt) {
             if ((attr.base != cbv) || (attr.comp != ccv)) {
+                QualityLogger.logPlayerAttribute(nm,this.attr.base,this.attr.comp);
                 cbv = attr.base;
-	    }
-	    if(attr.comp != ccv) {
+            }
+            if(attr.comp != ccv) {
                 ccv = attr.comp;
                 if (tbv <= cbv) {
                     tbv = cbv;

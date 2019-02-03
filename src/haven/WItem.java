@@ -73,6 +73,7 @@ public class WItem extends Widget implements DTarget {
 	public WItem(GItem item) {
 		super(sqsz);
 		this.item = item;
+        QualityLogger.logNewItem(item);
 	}
 
 	public void drawmain(GOut g, GSprite spr) {
@@ -443,6 +444,7 @@ public class WItem extends Widget implements DTarget {
 
 	@Override
 	public void reqdestroy() {
+        QualityLogger.logItemDestruction(item);
 		super.reqdestroy();
 		if (destroycb != null)
 			destroycb.notifyDestroy();

@@ -40,6 +40,7 @@ import haven.purus.BotUtils;
 import haven.res.ui.tt.q.qbuff.QBuff;
 
 public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owner {
+    public long tag=-1;
     public Indir<Resource> res;
     private static ItemFilter filter;
     private static long lastFilter = 0;
@@ -263,6 +264,7 @@ public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owne
         } else if (name == "meter") {
             meter = (int)((Number)args[0]).doubleValue();
             metertex = Text.renderstroked(String.format("%d%%", meter), Color.WHITE, Color.BLACK, num10Fnd).tex();
+            if (meter==1 || (meter>0 && meter%10==0) || meter==99)QualityLogger.logItemProgress(this);
         }
     }
 

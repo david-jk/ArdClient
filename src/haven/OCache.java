@@ -90,6 +90,7 @@ public class OCache implements Iterable<Gob> {
         if (objs.containsKey(id)) {
             if (!deleted.containsKey(id) || deleted.get(id) < frame) {
                 Gob old = objs.remove(id);
+                QualityLogger.logObjectRemoval(old);
                 deleted.put(id, frame);
                 old.dispose();
                 for(ChangeCallback cb : cbs)
@@ -101,6 +102,7 @@ public class OCache implements Iterable<Gob> {
     public synchronized void remove(long id) {
         Gob old = objs.remove(id);
         if(old != null) {
+            QualityLogger.logObjectRemoval(old);
             for(ChangeCallback cb : cbs)
                 cb.removed(old);
         }

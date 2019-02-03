@@ -41,8 +41,10 @@ public class MapGridSave {
             }
 
             BufferedImage img = drawmap(MCache.cmaps);
-            if (img != null)
+            if (img != null) {
                 save(img);
+                QualityLogger.logMapTileSave(map,g,mgs,session);
+            }
         }
     }
 

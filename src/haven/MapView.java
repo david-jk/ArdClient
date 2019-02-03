@@ -47,6 +47,7 @@ import static haven.MCache.tilesz;
 import static haven.OCache.posres;
 
 public class MapView extends PView implements DTarget, Console.Directory, PFListener {
+    public static MapView mv;
     public static boolean clickdb = false;
     public static long plgob = -1;
     public static Coord2d pllastcc;
@@ -521,6 +522,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 
     public MapView(Coord sz, Glob glob, Coord2d cc, long plgob) {
         super(sz);
+        this.mv = this;
         this.glob = glob;
         this.cc = cc;
         this.plgob = plgob;
