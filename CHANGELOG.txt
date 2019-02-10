@@ -1,3 +1,30 @@
+1.00.77
+Fixed new cauldron slider, turns out it was an ambient sound.
+Added waterstriders to hide list.
+Added yarrow to alarm list.
+Changed afk logout option to a selection box with various options. 0 disables auto afk logout. 
+~
+
+1.00.76
+Fixed drying racks with fish on them showing done when they're not.
+Fixed minimap tooltips showing for gobs that were hidden.
+Added volume slider for Cauldrons.
+Added volume slider for Whistling.
+~
+
+1.00.75
+Turned right click to abandon quests into a toggle under general settings, and is off by default.
+~
+
+1.00.74
+Added minimap tooltips for bushes/trees/boulders that you have toggled to show icons for.
+Put a crash prevention catch in the Discord class, first time I've seen that crash.
+Terrain mouseover will no longer be covered up by the map itself.
+Fixed bug preventing the use of sketchpads. 
+Moved Discord connection/disconnect button to options window.
+Added button to options window to connect to ArdZone ingame-chat channel. 
+~
+
 1.00.73
 Added strawberries to alarm list.
 Added fireflys to hide list.

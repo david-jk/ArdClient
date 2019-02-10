@@ -1844,7 +1844,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                                 || gob.type == Gob.Type.TROLL || gob.type == Gob.Type.WALRUS && !gob.isplayer()) {*/
                        if(!gob.isplayer())
                        if(gob.type == Gob.Type.PLAYER || (gob.getres() != null && gob.getres().name.startsWith("gfx/kritter/"))){
-                           System.out.println("Prox aggro 1 triggered.");
+                        //   System.out.println("Prox aggro 1 triggered.");
                             double dist = gob.rc.dist(mc);
                             if ((target == null || dist < target.rc.dist(mc)) && dist <= 5 * tilesz.x)
                                 target = gob;
@@ -1881,7 +1881,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                                 || gob.type == Gob.Type.TROLL || gob.type == Gob.Type.WALRUS && !gob.isplayer()) {*/
                       if(!gob.isplayer())
                         if(gob.getres()!= null && gob.getres().name.startsWith("gfx/kritter/")){
-                            System.out.println("Prox aggro 2 triggered.");
+                         //   System.out.println("Prox aggro 2 triggered.");
                             double dist = gob.rc.dist(mc);
                             if ((target == null || dist < target.rc.dist(mc)) && dist <= 5 * tilesz.x)
                                 target = gob;
@@ -1908,7 +1908,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                 if (Config.pf && clickb == 1 && curs != null && !curs.name.equals("gfx/hud/curs/study")) {
                     pfLeftClick(mc.floor(), null);
                 } else {
-                   // System.out.println("sending click with else arguments");
+                  // System.out.println("sending click with else arguments");
                     wdgmsg("click", args);
                 }
             } else {
@@ -1962,6 +1962,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                 if (Config.pf && curs != null && !curs.name.equals("gfx/hud/curs/study") && gob != null) {
                     pfRightClick(gob, (int)args[8], clickb, 0, null);
                 } else {
+                  //  System.out.println("sending click with else2 arguments");
                     wdgmsg("click", args);
                     if (Config.autopickmussels && gob.type == Gob.Type.MUSSEL)
                         startMusselsPicker(gob);
@@ -2055,7 +2056,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
     }
 
     public boolean mousedown(Coord c, int button) {
-      //  System.out.println("Mousedown detected mapview Coord : "+c+" button : "+button+" placing is : "+placing);
+      //  System.out.println("Mousedown detected mapview grab is : "+grab);
     	if(button == 1 && farmSelect) {
             synchronized (this) {
                 if (selection == null) {
@@ -2324,6 +2325,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
         MapView mv;
         final GrabXL xl = new GrabXL(this) {
             public boolean mmousedown(Coord cc, int button) {
+                System.out.println("mousedown detected in selector");
                 if (button != 1)
                     return (false);
                 return (super.mmousedown(cc, button));

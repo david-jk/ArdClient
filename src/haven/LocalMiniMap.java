@@ -43,7 +43,7 @@ public class LocalMiniMap extends Widget {
     private static final Tex gridblue = Resource.loadtex("gfx/hud/mmap/gridblue");
     private static final Tex gridred = Resource.loadtex("gfx/hud/mmap/gridred");
     private String biome;
-    private Tex biometex;
+   // public Tex biometex;
     public final MapView mv;
     public MapFile save;
     private Coord cc = null;
@@ -397,43 +397,47 @@ public class LocalMiniMap extends Widget {
         synchronized (oc) {
             for (Gob gob : oc) {
                 try {
-                    GobIcon icon = gob.getattr(GobIcon.class);
+                        GobIcon icon = gob.getattr(GobIcon.class);
+                        if (icon != null) {
+                            CheckListboxItem itm = Config.icons.get(gob.getres().basename());
+                            if (itm == null || !itm.selected) {
+                                Coord gc = p2c(gob.rc);
+                                Coord sz = icon.tex().sz();
+                                if (c.isect(gc.sub(sz.div(2)), sz)) {
+                                    Resource res = icon.res.get();
+                                    itm = Config.icons.get(res.basename());
+                                    if (itm == null || !itm.selected)
+                                        return gob;
+                                }
+                            }
+                        } else { // custom icons
+                            Coord gc = p2c(gob.rc);
+                            Coord sz = new Coord(18, 18);
+                            if (c.isect(gc.sub(sz.div(2)), sz)) {
+                                Resource res = gob.getres();
+                                KinInfo ki = gob.getattr(KinInfo.class);
+                                if (ki != null)
+                                    return gob;
+                                else if (gob.type == Gob.Type.TREE) {
+                                    CheckListboxItem itm = Config.trees.get(res.basename());
+                                    if (itm != null && itm.selected)
+                                        return gob;
+                                } else if (gob.type == Gob.Type.BUSH) {
+                                    CheckListboxItem itm = Config.bushes.get(res.basename());
+                                    if (itm != null && itm.selected)
+                                        return gob;
+                                } else if (gob.type == Gob.Type.BOULDER) {
+                                    CheckListboxItem itm = Config.boulders.get(res.basename().substring(0, res.basename().length() - 1));
+                                    if (itm != null && itm.selected)
+                                        return gob;
+                                } else if (res != null && Config.additonalicons.containsKey(res.name)) {
+                                    CheckListboxItem itm = Config.icons.get(res.basename());
+                                    if (itm == null || !itm.selected)
+                                        return gob;
+                                }
+                            }
+                        }
 
-                  if (icon != null) {
-                        Coord gc = p2c(gob.rc);
-                        Coord sz = icon.tex().sz();
-                        if (c.isect(gc.sub(sz.div(2)), sz)) {
-                            Resource res = icon.res.get();
-                            CheckListboxItem itm = Config.icons.get(res.basename());
-                            if (itm == null || !itm.selected)
-                                return gob;
-                        }
-                    } else { // custom icons
-                        Coord gc = p2c(gob.rc);
-                        Coord sz = new Coord(18, 18);
-                        if (c.isect(gc.sub(sz.div(2)), sz)) {
-                            Resource res = gob.getres();
-                            KinInfo ki = gob.getattr(KinInfo.class);
-                            if(ki != null)
-                                return gob;
-                            else if (gob.type == Gob.Type.TREE || gob.type == Gob.Type.BUSH || gob.type == Gob.Type.BOULDER){
-                                CheckListboxItem itm = Config.trees.get(res.basename());
-                                CheckListboxItem itm2 = Config.bushes.get(res.basename());
-                                CheckListboxItem itm3 = Config.boulders.get(res.basename());
-                                if (itm != null && itm.selected)
-                                   return gob;
-                                else if(itm2 != null && itm2.selected)
-                                    return gob;
-                                else if(itm3 != null && itm3.selected)
-                                    return gob;
-                            }
-                            else if (res != null && Config.additonalicons.containsKey(res.name)) {
-                                CheckListboxItem itm = Config.icons.get(res.basename());
-                                if (itm == null || !itm.selected)
-                                    return gob;
-                            }
-                        }
-                    }
                 } catch (Loading | NullPointerException l) {
                 }
             }
@@ -453,12 +457,14 @@ public class LocalMiniMap extends Widget {
                      if(ki != null)
                         return ki.name;
                     else if (icon != null)
-                        return pretty(gob.getres().name);
+                             return pretty(gob.getres().name);
                      else { // custom icons
                         if (res != null && Config.additonalicons.containsKey(res.name)) {
                             CheckListboxItem itm = Config.icons.get(res.basename());
                             return pretty(itm.name);
-                        }else
+                        }else if (gob.type == Gob.Type.BOULDER)
+                            return pretty(res.basename().substring(0, res.basename().length() - 1));
+                        else
                             return pretty(gob.getres().basename());
                     }
                 } catch (Loading | NullPointerException l) {
@@ -509,7 +515,8 @@ public class LocalMiniMap extends Widget {
             }
             if(!newbiome.equals(biome)) {
                 biome = newbiome;
-                biometex = Text.renderstroked(prettybiome(biome)).tex();
+               // biometex = Text.renderstroked(prettybiome(biome)).tex();
+                MinimapWnd.biometex = Text.renderstroked(prettybiome(biome)).tex();
             }
         } catch (Loading ignored) {}
     }
@@ -524,9 +531,9 @@ public class LocalMiniMap extends Widget {
     public void draw(GOut g) {
         if (cc == null)
             return;
-        if(biometex != null) {
-            g.image(biometex, Coord.z);
-        }
+      //  if(biometex != null) {
+        //    g.image(biometex, Coord.z);
+      //  }
 
         map:
         {

@@ -105,6 +105,8 @@ public class Config {
     public static double sfxclapvol = Utils.getprefd("sfxclapvol", 1.0);
     public static double sfxbeehivevol = Utils.getprefd("sfxbeehivevol", 1.0);
     public static double sfxchatvol = Utils.getprefd("sfxchatvol", 1.0);
+    public static double sfxcauldronvol = Utils.getprefd("sfxcauldronvol", 1.0);
+    public static double sfxwhistlevol = Utils.getprefd("sfxwhistlevol", 1.0);
     public static boolean showcraftcap = Utils.getprefb("showcraftcap", true);
     public static boolean showgobhp = Utils.getprefb("showgobhp", false);
     public static boolean showplantgrowstage = Utils.getprefb("showplantgrowstage", false);
@@ -117,6 +119,7 @@ public class Config {
     public static boolean logincharsheet = Utils.getprefb("logincharsheet", false);
     public static boolean loginstudywnd = Utils.getprefb("loginstudywnd", false);
     public static boolean afklogout = Utils.getprefb("afklogout", false);
+    public static int afklogouttime = Utils.getprefi("afklogouttime", 0);
     public static boolean simpleforage = Utils.getprefb("simpleforage", false);
     //public static boolean hidecrops = Utils.getprefb("hidecrops", false);
     public static boolean showfps = Utils.getprefb("showfps", false);
@@ -142,6 +145,7 @@ public class Config {
     public static boolean enabletracking = Utils.getprefb("enabletracking", false);
     public static boolean enableswimming = Utils.getprefb("enableswimming", false);
     public static boolean autoconnectdiscord = Utils.getprefb("autoconnectdiscord", false);
+    public static boolean autoconnectarddiscord = Utils.getprefb("autoconnectarddiscord", false);
     public static boolean enablecrime = Utils.getprefb("enablecrime", false);
     public static boolean resinfo = Utils.getprefb("resinfo", true);
     public static boolean showanimalrad = Utils.getprefb("showanimalrad", true);
@@ -209,6 +213,7 @@ public class Config {
     public static boolean discordchat =  Utils.getprefb("discordchat", false);
     public static String discordbotkey =  Utils.getpref("discordbotkey", "Null");
     public static boolean highlightpots = Utils.getprefb("highlightpots", false);
+    public static boolean abandonrightclick = Utils.getprefb("abandonrightclick", false);
     public static boolean DropEntrails = Utils.getprefb("DropEntrails", false);
     public static boolean DropIntestines = Utils.getprefb("DropIntestines", false);
     public static boolean StarveAlert = Utils.getprefb("StarveAlert", true);
@@ -262,7 +267,7 @@ public class Config {
     public static int cRackred = Utils.getprefi("cRackred",255);
     public static int cRackgreen = Utils.getprefi("cRackgreen",0);
     public static int cRackblue = Utils.getprefi("cRackblue",255);
-    public static String confid = "amber";
+    public static String confid = "ArdClient";
     public static final boolean isUpdate;
 
     public final static String chatfile = "chatlog.txt";
@@ -419,6 +424,7 @@ public class Config {
         put("forestsnail", new CheckListboxItem("Forest Snail"));
         put("forestlizard", new CheckListboxItem("Forest Lizard"));
         put("greenkelp", new CheckListboxItem("Green Kelp"));
+        put("waterstrider", new CheckListboxItem("Water Strider"));
     }};
 
     public final static HashMap<String, CheckListboxItem> flowermenus = new HashMap<String, CheckListboxItem>(26) {{
@@ -561,7 +567,7 @@ public class Config {
         put("gfx/kritter/forestsnail/forestsnail", new CheckListboxItem("Forest Snail"));
         put("gfx/kritter/forestlizard/forestlizard", new CheckListboxItem("Forest Lizard"));
         put("gfx/terobjs/herbs/greenkelp", new CheckListboxItem("Green Kelp"));
-
+        put("gfx/terobjs/herbs/yarrow", new CheckListboxItem("Yarrow"));
     }};
 
     public final static Set<String> locres = new HashSet<String>(Arrays.asList(

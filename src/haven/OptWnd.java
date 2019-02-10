@@ -28,6 +28,7 @@ package haven;
 
 
 import haven.automation.Discord;
+import haven.purus.BotUtils;
 import haven.resutil.BPRadSprite;
 
 import java.awt.Color;
@@ -404,6 +405,46 @@ public class OptWnd extends Window {
         main.add(new PButton(200, "Keybind Options", 'p', keybindsettings), new Coord(210, 120));
         main.add(new PButton(200,"Chat Settings",'c', chatsettings), new Coord(420,120));
         if (gopts) {
+            main.add(new Button(200, "Disconnect Discord") {
+                public void click() {
+                    if(Discord.jdalogin != null) {
+                        BotUtils.sysMsg("Discord Disconnected",Color.white);
+                        gameui().discordconnected = false;
+                        Discord.jdalogin.shutdownNow();
+                        Discord.jdalogin = null;
+                        for(int i=0;i<15;i++) {
+                            for (Widget w = gameui().chat.lchild; w != null; w = w.prev) {
+                                if (w instanceof ChatUI.DiscordChat)
+                                    w.destroy();
+                            }
+                        }
+                    }else
+                        BotUtils.sysMsg("Not currently connected.",Color.white);
+                }
+            }, new Coord(210, 150));
+            main.add(new Button(200, "Join Village Discord") {
+                public void click() {
+                    if(!gameui().discordconnected) {
+                        if (Resource.getLocString(Resource.BUNDLE_LABEL, Config.discordbotkey) != null) {
+                            new Thread(new Discord(gameui(), "normal")).start();
+                            gameui().discordconnected = true;
+                        }
+                        else
+                            BotUtils.sysMsg("No Key Detected, if there is one in chat settings you might need to relog.",Color.white);
+                    }else if(gameui().discordconnected)
+                        BotUtils.sysMsg("Already connected.",Color.white);
+                }
+            }, new Coord(210, 180));
+            main.add(new Button(200, "Join Ingame Discord") {
+                public void click() {
+                    if(gameui().discordconnected)
+                        BotUtils.sysMsg("Already Connected.",Color.white);
+                    else {
+                        new Thread(new Discord(gameui(), "ard")).start();
+                        gameui().discordconnected = true;
+                    }
+                }
+            }, new Coord(210, 210));
             main.add(new Button(200, "Join ArdClient Discord") {
                 public void click() {
                     try {
@@ -578,6 +619,36 @@ public class OptWnd extends Window {
                 double vol = val / 1000.0;
                 Config.sfxclapvol = vol;
                 Utils.setprefd("sfxclapvol", vol);
+            }
+        });
+        appender.setVerticalMargin(0);
+        appender.add(new Label("Cauldron sound volume - Changes are not immediate, will trigger on next cauldon sound start."));
+        appender.setVerticalMargin(VERTICAL_AUDIO_MARGIN);
+        appender.add(new HSlider(200, 0, 1000, 0) {
+            protected void attach(UI ui) {
+                super.attach(ui);
+                val = (int) (Config.sfxcauldronvol * 1000);
+            }
+
+            public void changed() {
+                double vol = val / 1000.0;
+                Config.sfxcauldronvol = vol;
+                Utils.setprefd("sfxcauldronvol", vol);
+            }
+        });
+        appender.setVerticalMargin(0);
+        appender.add(new Label("Whistling sound volume"));
+        appender.setVerticalMargin(VERTICAL_AUDIO_MARGIN);
+        appender.add(new HSlider(200, 0, 1000, 0) {
+            protected void attach(UI ui) {
+                super.attach(ui);
+                val = (int) (Config.sfxwhistlevol * 1000);
+            }
+
+            public void changed() {
+                double vol = val / 1000.0;
+                Config.sfxwhistlevol = vol;
+                Utils.setprefd("sfxwhistlevol", vol);
             }
         });
         appender.setVerticalMargin(0);
@@ -1119,6 +1190,17 @@ public class OptWnd extends Window {
                 a = val;
             }
         });
+        appender.add(new CheckBox("Abandon quests on right click") {
+            {
+                a = Config.abandonrightclick;
+            }
+
+            public void set(boolean val) {
+                Utils.setprefb("abandonrightclick", val);
+                Config.abandonrightclick = val;
+                a = val;
+            }
+        });
         appender.add(new CheckBox("Auto hearth") {
             {
                 a = Config.autohearth;
@@ -1141,17 +1223,7 @@ public class OptWnd extends Window {
                 a = val;
             }
         });
-        appender.add(new CheckBox("Logout on afk 5 minutes.") {
-            {
-                a = Config.afklogout;
-            }
-
-            public void set(boolean val) {
-                Utils.setprefb("afklogout", val);
-                Config.afklogout = val;
-                a = val;
-            }
-        });
+        appender.addRow(new Label("Auto Logout after x Minutes - 0 means never"), makeafkTimeDropdown());
         appender.add(new CheckBox("Repeat Starvation Alert Warning/Sound") {
             {
                 a = Config.StarveAlert;
@@ -2153,7 +2225,17 @@ public class OptWnd extends Window {
                     }
                 }
         );
+        appender.add(new CheckBox("Connection to ArdZone Discord on login."){
+            {
+                a = Config.autoconnectarddiscord;
+            }
 
+            public void set(boolean val) {
+                Utils.setprefb("autoconnectarddiscord", val);
+                Config.autoconnectarddiscord = val;
+                a = val;
+            }
+        });
        /* appender.addRow(new Label("Enter Discord Channel ID"),
                 new TextEntry(150, Config.discordchannel) {
                     @Override
@@ -2913,6 +2995,37 @@ public class OptWnd extends Window {
                 super.change(item);
                 Config.statgainsize = item;
                 Utils.setprefi("statgainsize", item);
+            }
+        };
+    }
+
+    private static final List<Integer> afkTime = Arrays.asList(0,5,10,15,20,25,30,45,60);
+    private Dropbox<Integer> makeafkTimeDropdown() {
+        List<String> values = afkTime.stream().map(x -> x.toString()).collect(Collectors.toList());
+        return new Dropbox<Integer>(afkTime.size(), values) {
+            {
+                super.change(Config.afklogouttime);
+            }
+            @Override
+            protected Integer listitem(int i) {
+                return afkTime.get(i);
+            }
+
+            @Override
+            protected int listitems() {
+                return afkTime.size();
+            }
+
+            @Override
+            protected void drawitem(GOut g, Integer item, int i) {
+                g.text(item.toString(), Coord.z);
+            }
+
+            @Override
+            public void change(Integer item) {
+                super.change(item);
+                Config.afklogouttime = item;
+                Utils.setprefi("afklogouttime", item);
             }
         };
     }
