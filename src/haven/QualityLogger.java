@@ -173,7 +173,7 @@ class QualityLogger {
             try {
                 (new File("qlog")).mkdir();
                 pw = new PrintWriter(new FileWriter("qlog/qaction"+System.currentTimeMillis()+".log", true));
-                pw.println(System.currentTimeMillis()+" VR 7");
+                pw.println(System.currentTimeMillis()+" VR 8");
             } catch(Exception ex) {
                 return;
             }
@@ -212,12 +212,12 @@ class QualityLogger {
                 continue;
             }
             String resName="";
-            if (res!=null)resName=res.name;
+            if (res!=null)resName=res.name+":v"+res.ver;
             if (gob.rc.x!=0 || gob.rc.y!=0) {
                 it.remove();
                 if (gob.id>=0) {
                     if (System.currentTimeMillis()-lastPlayerPosLogged>=500)logPlayerPosition();
-                    log("GO "+gob.tag+" "+gob.id+" "+gob.rc.x+","+gob.rc.y+" "+gob.frame+" "+resName+" "+(int)(gob.a/3.141592653589*180.0+0.5)+" "+getResStage(gob)+" "+getGobHealth(gob));
+                    log("GO "+gob.tag+" "+gob.id+" "+gob.rc.x+","+gob.rc.y+" "+gob.frame+" "+resName+" "+(int)(gob.a/3.141592653589*180.0+0.5)+" "+getDrawableAttr(gob)+" "+getGobHealth(gob)+" "+getResAttr(gob));
                 }
             }
         }
@@ -244,6 +244,54 @@ class QualityLogger {
         }
         return -1;
     }
+
+    private static String getResAttr(Gob gob) {
+        try {
+            String str="";
+            for (Iterator<Gob.ResAttr.Cell<?>> i = gob.rdata.iterator(); i.hasNext(); ) {
+                Gob.ResAttr.Cell<?> rd = i.next();
+                if (!str.equals(""))str+=",";
+                str+=rd.resid+":";
+                if (rd.odat==null)str+="null";
+                else str+=rd.odat.toHexString();
+                try {
+                    if (rd.resid.toString().contains("/vmat")) {
+                       MessageBuf data=rd.odat.clone();
+                       data.rewind();
+                       int size=data.rem();
+                       for (int o=0;o<size;o+=3) {
+                           int resid=data.uint16();
+                           str+=":"+gob.glob.sess.getres(resid);
+                           int d=data.uint8();
+                       }
+                    }
+                }
+                catch (Exception ex) {
+                }
+            }
+            if (str.equals(""))str="-";
+            return str;
+        }
+        catch (Exception ex) {
+            return "error";
+        }
+    }
+
+    private static String getDrawableAttr(Gob gob) {
+        GAttrib rda=gob.getattr(ResDrawable.class);
+        if (rda!=null) {
+            try {
+                ResDrawable rd=(ResDrawable)rda;
+                String str=rd.sdt.toHexString();
+                if (str.equals(""))str="-";
+                return str;
+            } catch (Exception ex) {
+            }
+        }
+        return "-";
+    }
+
+
 
     private static int getGobHealth(Gob gob) {
         GobHealth h=gob.getattr(GobHealth.class);

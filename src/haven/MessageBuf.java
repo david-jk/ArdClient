@@ -138,4 +138,12 @@ public class MessageBuf extends Message {
         buf.append(")");
         return (buf.toString());
     }
+
+    public String toHexString() {
+        StringBuilder buf = new StringBuilder();
+        for (int i = oh; i < rt; i++) {
+            buf.append(String.format("%02x", rbuf[i] & 0xff));
+        }
+        return (buf.toString());
+    }
 }
