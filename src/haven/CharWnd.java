@@ -518,6 +518,7 @@ public class CharWnd extends Window {
 
         public void tick(double dt) {
             if ((attr.base != cbv) || (attr.comp != ccv)) {
+                QualityLogger.logPlayerAttribute(nm,this.attr.base,this.attr.comp);
                 cbv = attr.base; ccv = attr.comp;
                 Color c = Color.WHITE;
                 if(ccv > cbv) {
@@ -533,12 +534,6 @@ public class CharWnd extends Window {
             }
             if ((lvlt > 0.0) && ((lvlt -= dt) < 0))
                 lvlt = 0.0;
-
-            if ((attr.base != cbv) || (attr.comp != ccv)) {
-                QualityLogger.logPlayerAttribute(nm,this.attr.base,this.attr.comp);
-                cbv = attr.base;
-                ccv = attr.comp;
-            }
         }
 
         public void draw(GOut g) {
