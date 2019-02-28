@@ -1,3 +1,120 @@
+1.00.90
+Fixed crash if you exit the options window from the login screen by clicking "x"
+Fixed shift left click crash.
+Some small changes to FPS counter in upper right.
+~
+
+1.00.89
+Small patch to fix combat hotkeys triggering keybinds.
+~
+
+1.00.88
+Adding toggle (on by default) to video settings to disable black loading screens, thx boshaw. 
+Added "Crack open" and "Collect coal" to auto select list.
+Added Ovens and Smelters to the disable animations list, will disable the smoke from them.
+Turned deep ocean a much darker and more obvious color to help people avoid it.
+Added mousewheel zoom to the Ctrl+A expanded map.
+Added rainbow shells to the alarm list.
+Fixed potential crash caused by recent alarm change, all alarms with incorrect values should be set to default upon login.
+Added sliders to set custom "daylight" filter, the CTRL+N functionality. This will allow you to customize your permanent daylight color. In display settings.
+Added alarm for combat initiation, off by default. To enable find the alarm in combat settings and select an alarm. 
+Fixed the ghostbusters sound effect file.
+Adding new list to "Control settings" of items to disable the shift+right click functionality on. This is to prevent accidentally emptying steel crucibles or smelters and such.
+Switched the curio list under study desk settings over to a list that you create yourself. If you generate a full list, feel free to share the .json file on discord for others.
+Added giant puffballs to alarm list.
+Added Perc*Exp to your equipment window above armor.
+Fixed server status button on login screen.
+Fixed ingame player counter.
+Fixed purus server status monitoring thread not closing when ingame.
+Added a couple more alarms.
+Added mayflower trees to tree list.
+Fixed magic cast from the f1-f12 bar not generating the confirmation window if so selected.
+Fixed map offset (again) when using minimap to move. 
+Adding video setting to lower terrain draw distance. Looks horrible, but will help fps for people who struggle with that.
+Adding "Output light settings" button to display options to better facilitate sharing light settings, and to help me gather data for some community generated presets.
+Added moon phases to the server time display under the Calendar. 
+Added turnips to trough filler.
+Added server call rate limiting for combat actions, and all other keypresses as well. Should fix getting d/cd when holding down buttons.
+Added "Pick leaf" to flowermenu options.
+Fixed mussels not setting off the alarm if so selected, also added oysters as a trigger for starting the mussel autopicker. 
+Fixed discord village chat relay duplicating messages sent from discord. 
+Fixed a null pointer crash if steel bot fails to pick up steel now, should just exit the bot. 
+Added seed stage turnips to Farmer bot by request. Seeds are "stage" 2 for turnips. 
+~
+
+1.00.87
+Fixed dipshit crash caused by hitting switch targets while not actually in combat, derp.
+~
+
+1.00.86
+Fixed minimap clicks having offset applied twice.
+Added seperate toggle to draw circles around all Kin, separate from drawing circles around Party. Also under display options.
+Publicized flax bot and the improved pepper bot, go nuts. Fuck Jorb. Flax bot is best used on wide open fields with lots of empty barrels, by a farmer with crawl speed left on 24/7. Will continously harvest flax, replant highest quality, and barrel leftover seeds generating near-infinite animal fodder while also raising flax quality continuously.
+Added toggle to disable village idol smoke.
+Added toggle to disable steel crucible smoke (I don't know if this works, I don't have steel crucibles.)
+Made target switching a keybind.
+Fixed dead bats not being picked up by hitting Q (Pick Forageables Keybind) - The fix was adding them to the minimap hide list, which I also did.
+~
+
+1.00.85
+New display settings for cave-in warning dust, colorful dust and the duration are now variable.
+~
+
+1.00.84
+Added Oysters to the mussel autopicker. 
+Added Oysters/Jellyfish to hide and alarm lists.
+Added gray clay to the hide list.
+~
+
+1.00.83
+Added soapstone and orthoclase to stones to drop while mining. 
+Added apatite boulder type.
+Added tar kilns and smelters to the available hide objects.
+Added frogspawn to the minimap hide list.
+Rewrote alarm system, new options are in "Sound alarms" every alarm should be selectable. Selecting an alarm will play the alarm, in accordance to the volume slider underneath the respective alarm. Keep that in mind, some alarms are louder than others. 
+Rewrote the "draw circle underneath player" logic to fix a performance issue it cuased.
+Added toggle in display settings to put a green circle around pavement stranglevines, to highlight them for destruction.
+Added video option to disable tar kiln smoke animation, should increase performance if turned on. 
+Added checkbox to timer window to automatically resort timers every 30 seconds based on time remaining.
+Added "setSpeed" and "maxSpeed" functions to PBotAPI, should allow you to set player speed and retrieve the current max player speed for a given terrain (I think)
+Fixed tooltips being off location when the map was manually offset. 
+Added candleberry to the minimap alarm list.
+Converted quest widget into a movable window that can be placed anywhere.
+Added percentage text to the middle of "Buff" icons to show their percentage without needing to hover over them.
+Changed the cave-in warning dust animation to persist for 30 minutes now, up from whatever tiny number it used to be by default. Should make it a little easier to keep track of cave-in tiles.
+Fixed bats showing a danger radius when dead, could potentially break other danger radiuses, let me know if it does. 
+~
+
+1.00.82
+Test your changes before you push update kids, derp. Fixing logic chain in new bucket functionality. 
+~
+
+1.00.81
+Added carried buckets to the drink macro.
+~
+
+1.00.80
+Readded default Ctrl+R keybind to cycle run speeds. Keybind can be changed as well.
+Added aggro circle to cave anglers and mammoths. (I'm not going to spend hours trying to find either one of these, so let me know if they don't in fact work.)
+Small change to opening the search window, might help situations where it is not ready to receive typing when opened. 
+~
+
+1.00.79
+Fixed performance issues caused by new player circle option.
+Added sodalite, gabbro, kyanite, zincspar, flurospar, and apatite to the mineable stones to drop list. If there are any stones missing, let me know their name and I'll add them.
+Remapped tiny "2" on french keyboards to ` to allow default drink keybind to work.
+~
+
+1.00.78
+Added toggle to "General Settings" to open belt on login.
+Added toggle to "Display Settings" to double the animal aggro radius.
+Added toggle to "Display Settings" to add a white circle underneath yourself. Will possibly make the color variable at some point, but for now it's just white.
+Added buttons to "Map settings" to clear all checked items from the 4 lists. One button per list, does not toggle, only clears all selected items.
+Added LP/Hour/Mental weight to curiosity tooltips. 
+Added Persimmon tree to tree list.
+Added "Rope closest animal" script back in. Removed shield checker and cauldron bot. 
+~
+
 1.00.77
 Fixed new cauldron slider, turns out it was an ambient sound.
 Added waterstriders to hide list.

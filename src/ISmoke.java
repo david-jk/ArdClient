@@ -4,22 +4,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import haven.BGL;
-import haven.Coord3f;
-import haven.GLState;
-import haven.GOut;
-import haven.Gob;
+import haven.*;
 import haven.Gob.Overlay.CDel;
-import haven.Location;
-import haven.Material;
 import haven.Material.Res;
-import haven.Message;
-import haven.RenderList;
-import haven.Resource;
 import haven.Skeleton.BoneOffset;
-import haven.Sprite;
-import haven.States;
-import haven.Utils;
 import haven.glsl.Cons;
 import haven.glsl.Expression;
 import haven.glsl.FragmentContext;
@@ -75,6 +63,12 @@ public class ISmoke extends Sprite implements CDel {
         this.srad = (float) sdt.uint8() / 10.0F;
 
         Resource ownres = owner.getres();
+       // if(ownres.basename().equals("clue") && clr == 35058)  //this is the clr for trespassing, need to get the rest.
+         //   spawn = false;
+       // System.out.println("ownres : "+ownres.name + "clr : "+clr);
+        CheckListboxItem itm = Config.disableanim.get(ownres.name);
+        if (itm != null && itm.selected)
+            spawn = false;
         if (ownres.name.endsWith("tarkiln")) {
             if (boffid.equals("s0")) {
                 loc = GLState.compose(Location.xlate(new Coord3f(0, 0, 12)));

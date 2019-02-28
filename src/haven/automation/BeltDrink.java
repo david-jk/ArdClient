@@ -87,16 +87,36 @@ public class BeltDrink implements Runnable {
             }
              if (drinks.size() == 0) {
                 try {
-                    BotUtils.sysLogAppend("No water found, opening belts! Please try again. This can also happen spamming the hotkey.", "white");
-                    gui.maininv.getItemsPartial("Belt");
-                    for (WItem w : gui.maininv.getItemsPartial("Belt"))
-                        w.item.wdgmsg("iact", Coord.z, -1);
-                    Equipory e = gui.equipory;
-                    for (WItem g : e.quickslots) {
-                        if (g.name.get().contains("Belt")) {
-                            g.item.wdgmsg("iact", Coord.z, -1);
-                        }
-                    }
+                    WItem l = gui.getequipory().quickslots[6];
+                    WItem r = gui.getequipory().quickslots[7];
+                        if (l != null && PBotAPI.canDrinkFrom(l)) {
+                            FlowerMenu.setNextSelection("Drink");
+                            l.item.wdgmsg("iact", Coord.z, -1);
+                            FlowerMenu menu = gui.ui.root.findchild(FlowerMenu.class);
+                            if (menu != null) {
+                                for (FlowerMenu.Petal opt : menu.opts) {
+                                    if (opt.name.equals("Drink")) {
+                                        menu.destroy();
+                                    }
+                                }
+                            }
+                        }else if (r != null && PBotAPI.canDrinkFrom(r)) {
+                                FlowerMenu.setNextSelection("Drink");
+                                r.item.wdgmsg("iact", Coord.z, -1);
+                                FlowerMenu menu = gui.ui.root.findchild(FlowerMenu.class);
+                                if (menu != null) {
+                                    for (FlowerMenu.Petal opt : menu.opts) {
+                                        if (opt.name.equals("Drink")) {
+                                            menu.destroy();
+                                        }
+                                    }
+                                }
+                            } else {
+                                BotUtils.sysLogAppend("No water found, opening belts!", "white");
+                                WItem k = gui.getequipory().quickslots[5];
+                                if (k != null)
+                                    k.item.wdgmsg("iact", Coord.z, -1);
+                            }
                 }catch(NullPointerException q){}
                  //gui.error("No water found!");
                  // }
@@ -110,7 +130,7 @@ public class BeltDrink implements Runnable {
             if (drinkable == null)
                 drinkable = inv.getItemPartialDrink("Waterflask");
             if (drinkable == null)
-                drinkable = inv.getItemPartialDrink("Kuska");
+                drinkable = inv.getItemPartialDrink("Kuksa");
             if (drinkable == null) {
                 return null;
             }
@@ -123,7 +143,7 @@ public class BeltDrink implements Runnable {
         if (drinkable == null)
             drinkable = inv.getItemPartialDrink("Waterflask");
         if (drinkable == null)
-            drinkable = inv.getItemPartialDrink("Kuska");
+            drinkable = inv.getItemPartialDrink("Kuksa");
         if (drinkable == null) {
             return null;
         }

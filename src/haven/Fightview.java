@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Fightview extends Widget {
-    private static final Resource oof = Resource.local().loadwait("sfx/hit1");
     static Tex bg = Resource.loadtex("gfx/hud/bosq");
     static int height = 5;
     static int ymarg = 5;
@@ -90,7 +89,7 @@ public class Fightview extends Widget {
         public void give(int state) {
             if (this == current)
                 curgive.state = state;
-            else this.give.state = state;
+             this.give.state = state;
         }
 
         public void show(boolean state) {
@@ -111,7 +110,7 @@ public class Fightview extends Widget {
             lastuse = Utils.rtime();
             if(lastact != null)
             if(lastact.get().basename().contains("cleave") && Config.cleavesound)
-                Audio.play(oof, 2);
+                Audio.play(Resource.local().loadwait(Config.cleavesfx), Config.cleavesoundvol);
             if (lastact != null && Config.logcombatactions) {
                     Resource res = lastact.get();
                     Resource.Tooltip tt = res.layer(Resource.tooltip);
@@ -139,7 +138,7 @@ public class Fightview extends Widget {
         lastuse = Utils.rtime();
         if(lastact != null)
             if(lastact.get().basename().contains("cleave") && Config.cleavesound)
-                Audio.play(oof, 2);
+                Audio.play(Resource.local().loadwait(Config.cleavesfx), Config.cleavesoundvol);
         if (lastact != null && Config.logcombatactions) {
             try {
                 Resource res = lastact.get();

@@ -74,7 +74,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import javax.security.auth.login.LoginException;
 
 public class ChatUI extends Widget {
-    private static final Resource alarmsfx = Resource.local().loadwait("sfx/chatalarm");
+    private static final Resource alarmsfx = Resource.local().loadwait("sfx/Ding");
     public static final RichText.Foundry fnd = new RichText.Foundry(new ChatParser(TextAttribute.FONT, Text.dfont.deriveFont((float)Config.fontsizechat)));
     public static final Text.Foundry qfnd = new Text.Foundry(Text.dfont, 12, new java.awt.Color(192, 255, 192));
     public static final int selw = 130;
@@ -87,7 +87,6 @@ public class ChatUI extends Widget {
             new Color(255, 0, 0),
     };
     public Channel sel = null;
-    public static String Titans;
     public int urgency = 0;
     private final Selector chansel;
     private Coord base = Coord.z;
@@ -713,9 +712,13 @@ na.put(ChatAttribute.HEARTH_SECRET, hs);
             wdgmsg("msg", text);
             if(Config.discordchat && this.name().equals(Config.chatalert) && Discord.jdalogin!=null){
                 GameUI gui = gameui();
+                System.out.println("Discord message4 : "+Discord.discordmessage);
                 for(TextChannel loop:haven.automation.Discord.channels)
-                    if (loop.getName().equals(Config.discordchannel))
-                        loop.sendMessage(gui.getparent(GameUI.class).buddies.getCharName()+": "+text).queue();
+                    if (loop.getName().equals(Config.discordchannel) && !Discord.discordmessage) {
+                        loop.sendMessage(gui.getparent(GameUI.class).buddies.getCharName() + ": " + text).queue();
+                        System.out.println("Discord message5 : "+Discord.discordmessage);
+                    }else
+                        Discord.SwitchMessageFlag();
             }
         }
     }
@@ -913,11 +916,14 @@ na.put(ChatAttribute.HEARTH_SECRET, hs);
                     append(cmsg);
                    // if (urgency > 0)
                     notify(cmsg, 1);
-
-                    if(Config.discordchat && this.name().equals(Config.chatalert) && Discord.jdalogin!=null && !cmsg.text().text.contains(Discord.botname)) {
+                    System.out.println("Discord message 2: "+Discord.discordmessage);
+                    if(Config.discordchat && this.name().equals(Config.chatalert) && Discord.jdalogin!=null && !cmsg.text().text.contains(Discord.botname)&& !Discord.discordmessage) {
                         for (TextChannel loop : haven.automation.Discord.channels)
-                            if (loop.getName().equals(Config.discordchannel))
+                            if (loop.getName().equals(Config.discordchannel)) {
                                 loop.sendMessage(name + ": " + cmsg.text().text).queue();
+                                Discord.SwitchMessageFlag();
+                                System.out.println("Discord message3 : "+Discord.discordmessage);
+                            }
                     }
                   //  notify(cmsg, urgency);
                     save(name, cmsg.text().text);
@@ -1546,8 +1552,8 @@ try {
             } else {
                 resize(sz.x, savedh = Math.max(111, sz.y + doff.y - c.y));
                 GameUI gui = gameui();
-                if (gui.questpanel != null)
-                    gui.questpanel.c = new Coord(10, gui.sz.y - gui.chat.sz.y - gui.beltwdg.sz.y - gui.questpanel.sz.y - 10);
+              //  if (gui.questpanel != null)
+                  //  gui.questpanel.c = new Coord(10, gui.sz.y - gui.chat.sz.y - gui.beltwdg.sz.y - gui.questpanel.sz.y - 10);
             }
         } else {
             super.mousemove(c);
