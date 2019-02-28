@@ -30,6 +30,8 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 import java.lang.ref.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Session implements Resource.Resolver {
     public static final int PVER = 17;
@@ -75,6 +77,8 @@ public class Session implements Resource.Resolver {
     public final Glob glob;
     public byte[] sesskey;
     private int localCacheId = -1;
+    private String sessionName=Long.toString(System.nanoTime());
+    public static final boolean savePackets=System.getenv("SAVE_PACKETS")!=null;
 
     @SuppressWarnings("serial")
     public static class MessageException extends RuntimeException {
@@ -423,6 +427,17 @@ public class Session implements Resource.Resolver {
                     if (!p.getSocketAddress().equals(server))
                         continue;
                     PMessage msg = new PMessage(p.getData()[0], p.getData(), 1, p.getLength() - 1);
+
+                    try {
+                        if (savePackets) {
+                            String dirName="packets/"+sessionName;
+                            File dir=new File(dirName);
+                            if (!dir.exists())dir.mkdirs();
+                            Files.write(Paths.get(dirName+"/"+System.nanoTime()),Arrays.copyOfRange(p.getData(),0,p.getLength()));
+                        }
+                    }
+                    catch(Exception ex) {}
+
                     if (msg.type == MSG_SESS) {
                         if (state == "conn") {
                             int error = msg.uint8();
@@ -712,6 +727,17 @@ public class Session implements Resource.Resolver {
     public void sendmsg(byte[] msg) {
         try {
             sk.send(new DatagramPacket(msg, msg.length, server));
+
+            try {
+                if (savePackets) {
+                    String dirName="packets/"+sessionName;
+                    File dir=new File(dirName);
+                    if (!dir.exists())dir.mkdirs();
+                    Files.write(Paths.get(dirName+"/s"+System.nanoTime()),msg);
+                }
+            }
+            catch(Exception ex) {}
+
         } catch (IOException e) {
         }
     }
