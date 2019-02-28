@@ -26,9 +26,6 @@ class QualityLogger {
         boolean withoutPlayerPos=resName.contains("fishjump") || resName.equals("sfx/hammer") ||
                                   resName.equals("sfx/breakwood") || resName.equals("sfx/creak");
 
-        if (!withoutPlayerPos && !resName.contains("harvestgrass") && !resName.contains("vegetables") &&
-            !resName.contains("shldigclay") && !resName.contains("shoveldig") &&
-            !resName.contains("waves"))return;
         log("SC "+gob.id+" "+resName+" "+className+" "+gob.rc.x+","+gob.rc.y);
         if (!withoutPlayerPos)logPlayerPosition();
     }
