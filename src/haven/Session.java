@@ -355,6 +355,7 @@ public class Session implements Resource.Resolver {
                 int resid = msg.uint16();
                 String resname = msg.string();
                 int resver = msg.uint16();
+                QualityLogger.logResMapping(resid,resname,resver);
                 cachedres(resid).set(resname, resver);
             } else if (msg.type == RMessage.RMSG_PARTY) {
                 glob.party.msg(msg);

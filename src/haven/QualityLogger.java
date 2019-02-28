@@ -100,6 +100,10 @@ class QualityLogger {
         log("AT \""+getPlayerName()+"\" "+attr+" "+base+"+"+(total-base));
     }
 
+    public static void logResMapping(int resId,String resName,int resVersion) {
+        log("RS "+resId+" "+resName+" "+resVersion);
+    }
+
     public static synchronized void logGobCreation(Gob gob) {
         pendingObjects.add(gob);
         gob.tag=System.currentTimeMillis();
@@ -173,7 +177,7 @@ class QualityLogger {
             try {
                 (new File("qlog")).mkdir();
                 pw = new PrintWriter(new FileWriter("qlog/qaction"+System.currentTimeMillis()+".log", true));
-                pw.println(System.currentTimeMillis()+" VR 8");
+                pw.println(System.currentTimeMillis()+" VR 9");
             } catch(Exception ex) {
                 return;
             }
