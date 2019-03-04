@@ -59,6 +59,7 @@ public class Widget {
     public int gkey;
     private Widget prevtt;
     static Map<String, Factory> types = new TreeMap<String, Factory>();
+    public int id=-1;
 
     @dolda.jglob.Discoverable
     @Target(ElementType.TYPE)
@@ -631,6 +632,10 @@ public class Widget {
                 cursor = null;
             else
                 cursor = Resource.remote().load((String) args[0], (Integer) args[1]);
+
+            if (args.length==0)QualityLogger.logCursor(this,null,0);
+            else QualityLogger.logCursor(this,(String)args[0],(Integer)args[1]);
+
         } else if (msg == "tip") {
             int a = 0;
             Object tt = args[a++];

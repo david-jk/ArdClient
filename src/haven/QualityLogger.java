@@ -107,6 +107,11 @@ class QualityLogger {
         startPendingThread();
     }
 
+    public static void logCursor(Widget w,String resName,int resVer) {
+        if (resName!=null)log("CR "+w.id+" "+w.getClass().getSimpleName()+" "+resName+" "+resVer);
+        else log("CR "+w.id+" "+w.getClass().getSimpleName()+" null");
+    }
+
     public static void tick() {
         if (MapView.mv==null || MapView.mv.glob.oc==null)return;
 
