@@ -122,8 +122,11 @@ class QualityLogger {
     }
 
     public static void logQuestPointer(String questGiver,Coord ic,long objId) {
-        Coord2d c=ic.mul(posres);
-        log("QP "+questGiver+" "+c.x+","+c.y+" "+objId);
+        if (ic==null)log("QP "+questGiver+" null "+objId);
+        else {
+            Coord2d c=ic.mul(posres);
+            log("QP "+questGiver+" "+c.x+","+c.y+" "+objId);
+        }
     }
 
     public static void tick() {
