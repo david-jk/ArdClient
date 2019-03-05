@@ -1092,8 +1092,10 @@ public class GameUI extends ConsoleHost implements Console.Directory {
     public void uimsg(String msg, Object... args) {
         if (msg == "err") {
             error((String) args[0]);
+            QualityLogger.logUiMessage((String) args[0],true);
         } else if (msg == "msg") {
             String text = (String) args[0];
+            QualityLogger.logUiMessage(text,false);
             if (text.startsWith("Swimming is now turned")) {
                 togglebuff(text, Bufflist.buffswim);
                 if (swimautotgld) {

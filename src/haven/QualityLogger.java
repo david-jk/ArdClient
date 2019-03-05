@@ -112,6 +112,10 @@ class QualityLogger {
         else log("CR "+w.id+" "+w.getClass().getSimpleName()+" null");
     }
 
+    public static void logUiMessage(String msg,boolean error) {
+        log("UI "+(error? "err" : "msg")+" "+msg);
+    }
+
     public static void tick() {
         if (MapView.mv==null || MapView.mv.glob.oc==null)return;
 
