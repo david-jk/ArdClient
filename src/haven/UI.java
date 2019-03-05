@@ -394,6 +394,20 @@ public class UI {
         synchronized (this) {
             Widget wdg = widgets.get(id);
 
+            if (wdg.getClass().getSimpleName().equals("Pointer") && msg.equals("upd")) {
+                int i=0;
+                Coord c=null;
+                long objId=-1;
+                for (Object obj : args) {
+                    if (i==0)c=(Coord)obj;
+                    if (i==1) {
+                        if (obj!=null)objId=(Integer)obj;
+                    }
+                    i++;
+                }
+                QualityLogger.logQuestPointer(wdg.tooltipStr,c,objId);
+            }
+
             if(realmchat != null){
             if(id == realmchat.wdgid()){
                 if (msg.contains("msg") && wdg.toString().contains("Realm")) {

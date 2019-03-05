@@ -60,6 +60,7 @@ public class Widget {
     private Widget prevtt;
     static Map<String, Factory> types = new TreeMap<String, Factory>();
     public int id=-1;
+    public String tooltipStr=null;
 
     @dolda.jglob.Discoverable
     @Target(ElementType.TYPE)
@@ -640,9 +641,11 @@ public class Widget {
             int a = 0;
             Object tt = args[a++];
             if (tt instanceof String) {
+                tooltipStr=(String)tt;
                 tooltip = Text.render(Resource.getLocString(Resource.BUNDLE_LABEL, (String)tt));
             } else if (tt instanceof Integer) {
                 final Indir<Resource> tres = ui.sess.getres((Integer) tt);
+                tooltipStr=tres.toString();
                 tooltip = new Indir<Tex>() {
                     Text t = null;
 

@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import static haven.OCache.posres;
 
 class QualityLogger {
     private static PrintWriter pw;
@@ -118,6 +119,11 @@ class QualityLogger {
 
     public static void logSoundEffect(Indir<Resource> res,double volume,double speed) {
         log("SF "+res.toString()+" "+volume+" "+speed);
+    }
+
+    public static void logQuestPointer(String questGiver,Coord ic,long objId) {
+        Coord2d c=ic.mul(posres);
+        log("QP "+questGiver+" "+c.x+","+c.y+" "+objId);
     }
 
     public static void tick() {
