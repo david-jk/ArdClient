@@ -116,6 +116,10 @@ class QualityLogger {
         log("UI "+(error? "err" : "msg")+" "+msg);
     }
 
+    public static void logSoundEffect(Indir<Resource> res,double volume,double speed) {
+        log("SF "+res.toString()+" "+volume+" "+speed);
+    }
+
     public static void tick() {
         if (MapView.mv==null || MapView.mv.glob.oc==null)return;
 
@@ -183,7 +187,7 @@ class QualityLogger {
             try {
                 (new File("qlog")).mkdir();
                 pw = new PrintWriter(new FileWriter("qlog/qaction"+System.currentTimeMillis()+".log", true));
-                pw.println(System.currentTimeMillis()+" VR 9");
+                pw.println(System.currentTimeMillis()+" VR 10");
             } catch(Exception ex) {
                 return;
             }

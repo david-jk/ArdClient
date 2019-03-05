@@ -363,6 +363,7 @@ public class Session implements Resource.Resolver {
                 Indir<Resource> res = getres(msg.uint16());
                 double vol = ((double) msg.uint16()) / 256.0;
                 double spd = ((double) msg.uint16()) / 256.0;
+                QualityLogger.logSoundEffect(res,vol,spd);
                 Audio.play(res);
             } else if (msg.type == RMessage.RMSG_CATTR) {
                 glob.cattr(msg);
