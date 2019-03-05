@@ -135,6 +135,7 @@ public class UI {
     public void bind(Widget w, int id) {
         widgets.put(id, w);
         rwidgets.put(w, id);
+        w.id=id;
         if(id == questid && CharWnd.abandonquest){
             w.wdgmsg("opt","rm");
             readytodrop = true;
