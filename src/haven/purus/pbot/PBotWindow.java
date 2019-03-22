@@ -12,11 +12,11 @@ import haven.Window;
 
 public class PBotWindow extends Window {
 
-	private String id;
+	private String scriptId;
 	
 	public PBotWindow(Coord sz, String cap, String id) {
 		super(sz, cap);
-		this.id = id;
+		this.scriptId = id;
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class PBotWindow extends Window {
 					@Override
 					public void run() {
 						try {
-							((Invocable)PBotScriptmanager.getScript(id).getEngine()).invokeFunction(name, name);
+							((Invocable)PBotScriptmanager.getScript(scriptId).getEngine()).invokeFunction(name, name);
 						} catch (NoSuchMethodException | ScriptException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -67,7 +67,7 @@ public class PBotWindow extends Window {
 					@Override
 					public void run() {
 						try {
-							((Invocable)PBotScriptmanager.getScript(id).getEngine()).invokeFunction(name, val);
+							((Invocable)PBotScriptmanager.getScript(scriptId).getEngine()).invokeFunction(name, val);
 						} catch (NoSuchMethodException | ScriptException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
