@@ -6,6 +6,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import static haven.OCache.posres;
 
 class QualityLogger {
@@ -129,6 +131,16 @@ class QualityLogger {
         }
     }
 
+    public static void logBBox(String resName,GobHitbox.BBox bbox,long gobId) {
+        if (bbox!=null) {
+            String bboxStr=resName+" "+bbox.a.x+","+bbox.a.y+" "+bbox.b.x+","+bbox.b.y;
+            if (!bboxesLogged.contains(bboxStr)) {
+                log("BB "+gobId+" "+bboxStr);
+                bboxesLogged.add(bboxStr);
+            }
+        }
+    }
+
     public static void tick() {
         if (MapView.mv==null || MapView.mv.glob.oc==null)return;
 
@@ -196,7 +208,7 @@ class QualityLogger {
             try {
                 (new File("qlog")).mkdir();
                 pw = new PrintWriter(new FileWriter("qlog/qaction"+System.currentTimeMillis()+".log", true));
-                pw.println(System.currentTimeMillis()+" VR 10");
+                pw.println(System.currentTimeMillis()+" VR 11");
             } catch(Exception ex) {
                 return;
             }
@@ -325,4 +337,5 @@ class QualityLogger {
     private static ArrayList<GItem> pendingItems=new ArrayList<GItem>();
     private static ArrayList<Gob> pendingObjects=new ArrayList<Gob>();
     private static long lastPlayerPosLogged=0;
+    private static Set<String> bboxesLogged=new HashSet<String>();
 }

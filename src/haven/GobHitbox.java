@@ -76,6 +76,17 @@ public class GobHitbox extends Sprite {
     private static final BBox bboxHwall = new BBox(new Coord(-1, 0), new Coord(0, 11));
 
     public static BBox getBBox(Gob gob) {
+        BBox bbox=getBBoxReal(gob);
+        if (bbox!=null) {
+            try {
+                Resource res=gob.getres();
+                if (res!=null)QualityLogger.logBBox(res.name,bbox,gob.id);
+            } catch (Loading l) {}
+        }
+        return bbox;
+    }
+
+    public static BBox getBBoxReal(Gob gob) {
         Resource res = null;
         try {
             res = gob.getres();
