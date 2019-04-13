@@ -371,7 +371,7 @@ public class MainFrame extends java.awt.Frame implements Runnable, Console.Direc
         System.exit(0);
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 	    /* Set up the error handler as early as humanly possible. */
         final haven.error.ErrorHandler hg = new haven.error.ErrorHandler();
         hg.sethandler(new haven.error.ErrorGui(null) {
@@ -380,6 +380,8 @@ public class MainFrame extends java.awt.Frame implements Runnable, Console.Direc
             }
         });
         ThreadGroup g = hg;
+
+        new ScriptCommunicator();
 
         Thread main = new HackThread(g, new Runnable() {
             public void run() {

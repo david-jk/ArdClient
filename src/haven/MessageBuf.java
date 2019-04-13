@@ -26,6 +26,8 @@
 
 package haven;
 
+import java.util.*;
+
 public class MessageBuf extends Message {
     public static final MessageBuf nil = new MessageBuf();
     private final int oh;
@@ -145,5 +147,9 @@ public class MessageBuf extends Message {
             buf.append(String.format("%02x", rbuf[i] & 0xff));
         }
         return (buf.toString());
+    }
+
+    public byte[] toByteArray() {
+        return Arrays.copyOfRange(rbuf,oh,rt);
     }
 }

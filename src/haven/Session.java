@@ -437,6 +437,7 @@ public class Session implements Resource.Resolver {
                             if (!dir.exists())dir.mkdirs();
                             Files.write(Paths.get(dirName+"/"+System.nanoTime()),Arrays.copyOfRange(p.getData(),0,p.getLength()));
                         }
+                        if (ScriptCommunicator.globalInstance!=null)ScriptCommunicator.globalInstance.notifyMessageReceived(msg);
                     }
                     catch(Exception ex) {}
 
@@ -661,6 +662,7 @@ public class Session implements Resource.Resolver {
     }
 
     public Session(SocketAddress server, String username, byte[] cookie, Object... args) {
+        if (ScriptCommunicator.globalInstance!=null)ScriptCommunicator.globalInstance.setSession(this);
         this.server = server;
         this.username = username;
         this.cookie = cookie;
@@ -701,8 +703,10 @@ public class Session implements Resource.Resolver {
 
     public void queuemsg(PMessage pmsg) {
         RMessage msg = new RMessage(pmsg);
-        msg.seq = tseq;
-        tseq = (tseq + 1) % 65536;
+        synchronized(this) {
+            msg.seq = tseq;
+            tseq = (tseq + 1) % 65536;
+        }
         synchronized (pending) {
             pending.add(msg);
         }
@@ -727,8 +731,13 @@ public class Session implements Resource.Resolver {
     }
 
     public void sendmsg(byte[] msg) {
+        sendmsg(msg,true);
+    }
+
+    public void sendmsg(byte[] msg,boolean notify) {
         try {
             sk.send(new DatagramPacket(msg, msg.length, server));
+            //if (ScriptCommunicator.globalInstance!=null && notify)ScriptCommunicator.globalInstance.notifyMessageSent(msg);
 
             try {
                 if (savePackets) {
