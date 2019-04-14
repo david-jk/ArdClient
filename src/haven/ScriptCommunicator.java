@@ -11,7 +11,7 @@ import haven.util.*;
 
 class ScriptCommunicator {
     public static final int CMSG_SEND_MSG=1,CMSG_SEND_SEQ_MSG=2,CMSG_PING=3,CMSG_PONG=4;
-    public static final int SMSG_MSG_RECEIVED=1,SMSG_MSG_SENT=2,SMSG_PING=3,SMSG_PONG=4;
+    public static final int SMSG_MSG_RECEIVED=1,SMSG_MSG_SENT=2,SMSG_PING=3,SMSG_PONG=4,SMSG_DUMP_START=5,SMSG_DUMP_FINISHED=6;
     public static ScriptCommunicator globalInstance;
 
     private int port=0;
@@ -40,6 +40,7 @@ class ScriptCommunicator {
          ClientThread(Socket s) {
              this.s=s;
              mc=new MessageConnection(s,this);
+             firstLiveMessageIndex=events.size();
          }
 
          public void run() {
@@ -61,30 +62,36 @@ class ScriptCommunicator {
 
          public void sendPendingEvents() {
              ArrayList<LoggedMessage> toSend=new ArrayList<LoggedMessage>();
+             int firstIdxToSend=-1;
              synchronized(ScriptCommunicator.this) {
+                 firstIdxToSend=messageIndex;
                  while (messageIndex<events.size()) {
                      toSend.add(events.get(messageIndex++));
                  }
              }
 
+             if (firstIdxToSend==0)mc.sendMessage(SMSG_DUMP_START,new ByteStream());
+
              for (int i=0;i<toSend.size();i++) {
+                 int evIdx=firstIdxToSend+i;
+                 if (evIdx==firstLiveMessageIndex)mc.sendMessage(SMSG_DUMP_FINISHED,new ByteStream());
                  LoggedMessage event=toSend.get(i);
                  ByteStream s=new ByteStream();
                  s.writeBlob(event.data);
                  mc.sendMessage(event.incoming? SMSG_MSG_RECEIVED : SMSG_MSG_SENT,s);
              }
+
+             if (firstIdxToSend+toSend.size()==firstLiveMessageIndex)mc.sendMessage(SMSG_DUMP_FINISHED,new ByteStream());
          }
 
          @Override
          public void handleMessage(int type,ByteStream msg) {
              if (type==CMSG_SEND_MSG) {
                  session.sendmsg(msg.readBlob(),SessionLogger.F_SENT_BY_SCRIPT);
-                 System.out.println("Sending normal message");
              }
              else if (type==CMSG_SEND_SEQ_MSG) {
                  int stype=msg.readBytes(1);
                  byte[] data=msg.readBlob();
-                 System.out.println("Sending seq message of type "+stype+" and size "+data.length+", session="+session.toString());
                  PMessage pmsg=new PMessage(stype);
                  pmsg.addbytes(data);
                  session.queuemsg(pmsg,SessionLogger.F_SENT_BY_SCRIPT);
@@ -95,6 +102,7 @@ class ScriptCommunicator {
          private Socket s;
          private MessageConnection mc;
          private int messageIndex=0;
+         private int firstLiveMessageIndex=0;
     }
 
     class ServerThread extends Thread {
