@@ -306,9 +306,9 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
         }
 
         public boolean wheel(Coord c, int amount) {
-            float d = dist + (amount * Config.badcamsensitivity);
-            if (d < 5)
-                d = 5;
+            float d = dist + (amount * Config.badcamsensitivity * 2);
+            if (d < 10)
+                d = 10;
             dist = d;
             return (true);
         }
@@ -2179,7 +2179,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                             int t = map.gettile(mc.floor(tilesz));
                             Resource res = map.tilesetr(t);
                             if (res != null) {
-                                tooltip = res.name;
+                                tooltip = res.name+", elevation: "+map.getz(mc.floor(tilesz));
                                 return;
                             }
                         }
