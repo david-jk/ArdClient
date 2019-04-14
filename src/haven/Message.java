@@ -438,6 +438,19 @@ public abstract class Message {
         return Arrays.copyOfRange(rbuf,rh,rt);
     }
 
+    public byte[] getWriteBuffer() {
+        return Arrays.copyOfRange(wbuf,0,wh);
+    }
+
+    public void blob32(byte[] b) {
+        adduint32(b.length);
+        addbytes(b);
+    }
+
+    public byte[] blob32() {
+        return bytes(int32());
+    }
+
     public int peekrbuf(int i) {
         if (rbuf.length - 1 < i)
             return -1;

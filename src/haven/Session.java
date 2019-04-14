@@ -79,6 +79,7 @@ public class Session implements Resource.Resolver {
     private int localCacheId = -1;
     private String sessionName=Long.toString(System.nanoTime());
     public static final boolean savePackets=System.getenv("SAVE_PACKETS")!=null;
+    private SessionLogger logger=new SessionLogger();
 
     @SuppressWarnings("serial")
     public static class MessageException extends RuntimeException {
@@ -438,6 +439,7 @@ public class Session implements Resource.Resolver {
                             Files.write(Paths.get(dirName+"/"+System.nanoTime()),Arrays.copyOfRange(p.getData(),0,p.getLength()));
                         }
                         if (ScriptCommunicator.globalInstance!=null)ScriptCommunicator.globalInstance.notifyMessageReceived(msg);
+                        logger.notifyMessageReceived(msg);
                     }
                     catch(Exception ex) {}
 
@@ -583,7 +585,7 @@ public class Session implements Resource.Resolver {
                                         rmsg.adduint16(msg.seq);
                                         rmsg.adduint8(msg.type);
                                         rmsg.addbytes(msg.fin());
-                                        sendmsg(rmsg);
+                                        sendmsg(rmsg,msg.flags);
                                     }
                                 }
                                 beat = false;
@@ -695,6 +697,7 @@ public class Session implements Resource.Resolver {
 
     public void close() {
         sworker.interrupt();
+        logger.close();
     }
 
     public synchronized boolean alive() {
@@ -702,7 +705,11 @@ public class Session implements Resource.Resolver {
     }
 
     public void queuemsg(PMessage pmsg) {
-        RMessage msg = new RMessage(pmsg);
+        queuemsg(pmsg,0);
+    }
+
+    public void queuemsg(PMessage pmsg,int flags) {
+        RMessage msg = new RMessage(pmsg,flags);
         synchronized(this) {
             msg.seq = tseq;
             tseq = (tseq + 1) % 65536;
@@ -724,20 +731,25 @@ public class Session implements Resource.Resolver {
     }
 
     public void sendmsg(PMessage msg) {
+        sendmsg(msg,0);
+    }
+
+    public void sendmsg(PMessage msg,int flags) {
         byte[] buf = new byte[msg.size() + 1];
         buf[0] = (byte) msg.type;
         msg.fin(buf, 1);
-        sendmsg(buf);
+        sendmsg(buf,flags);
     }
 
     public void sendmsg(byte[] msg) {
-        sendmsg(msg,true);
+        sendmsg(msg,0);
     }
 
-    public void sendmsg(byte[] msg,boolean notify) {
+    public void sendmsg(byte[] msg,int flags) {
         try {
             sk.send(new DatagramPacket(msg, msg.length, server));
-            //if (ScriptCommunicator.globalInstance!=null && notify)ScriptCommunicator.globalInstance.notifyMessageSent(msg);
+            if (ScriptCommunicator.globalInstance!=null)ScriptCommunicator.globalInstance.notifyMessageSent(msg);
+            logger.notifyMessageSent(msg,flags);
 
             try {
                 if (savePackets) {

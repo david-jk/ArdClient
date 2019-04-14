@@ -47,6 +47,7 @@ public class RMessage extends PMessage {
     public long last = 0;
     public int retx = 0;
     public int seq;
+    public int flags=0;
 
     public RMessage(int type, byte[] blob, int off, int len) {
         super(type, blob, off, len);
@@ -60,7 +61,8 @@ public class RMessage extends PMessage {
         super(type);
     }
 
-    public RMessage(PMessage msg) {
+    public RMessage(PMessage msg,int flags) {
         super(msg);
+        this.flags=flags;
     }
 }

@@ -78,7 +78,7 @@ class ScriptCommunicator {
          @Override
          public void handleMessage(int type,ByteStream msg) {
              if (type==CMSG_SEND_MSG) {
-                 session.sendmsg(msg.readBlob(),false);
+                 session.sendmsg(msg.readBlob(),SessionLogger.F_SENT_BY_SCRIPT);
                  System.out.println("Sending normal message");
              }
              else if (type==CMSG_SEND_SEQ_MSG) {
@@ -87,7 +87,7 @@ class ScriptCommunicator {
                  System.out.println("Sending seq message of type "+stype+" and size "+data.length+", session="+session.toString());
                  PMessage pmsg=new PMessage(stype);
                  pmsg.addbytes(data);
-                 session.queuemsg(pmsg); /* todo: no notify */
+                 session.queuemsg(pmsg,SessionLogger.F_SENT_BY_SCRIPT);
              }
              else if (type==CMSG_PING)mc.sendMessage(SMSG_PONG,null,0);
          }
