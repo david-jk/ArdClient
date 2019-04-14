@@ -657,8 +657,12 @@ public class LocalMiniMap extends Widget {
             if (button == 1)
                 MapView.pllastcc = mc;
             Gob gob = findicongob(csd.add(delta));
+
             if (gob == null) {
-                mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags());
+                Resource curs = ui.root.getcurs(c);
+                if (Config.pf && button==1 && curs!=null && !curs.name.equals("gfx/hud/curs/study")) {
+                    mv.pfLeftClick(mc.floor(),null);
+                } else mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags());
             } else {
                 mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags(), 0, (int) gob.id, gob.rc.floor(posres), 0, -1);
                 if (Config.autopickmussels && gob.type == Gob.Type.MUSSEL)
