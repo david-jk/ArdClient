@@ -11,7 +11,7 @@ import haven.util.*;
 
 class ScriptCommunicator {
     public static final int CMSG_SEND_MSG=1,CMSG_SEND_SEQ_MSG=2,CMSG_PING=3,CMSG_PONG=4;
-    public static final int SMSG_MSG_RECEIVED=1,SMSG_MSG_SENT=2,SMSG_PING=3,SMSG_PONG=4,SMSG_DUMP_START=5,SMSG_DUMP_FINISHED=6;
+    public static final int SMSG_MSG_RECEIVED=1,SMSG_MSG_SENT=2,SMSG_PING=3,SMSG_PONG=4,SMSG_DUMP_START=5,SMSG_DUMP_FINISHED=6,SMSG_SCRIPT_MSG=7;
     public static ScriptCommunicator globalInstance;
 
     private int port=0;
@@ -82,6 +82,22 @@ class ScriptCommunicator {
              }
 
              if (firstIdxToSend+toSend.size()==firstLiveMessageIndex)mc.sendMessage(SMSG_DUMP_FINISHED,new ByteStream());
+
+             ArrayList<PendingScriptMessage> smsgToSend=null;
+             synchronized(pendingScriptMessages) {
+                 if (pendingScriptMessages.size()>0) {
+                     smsgToSend=(ArrayList<PendingScriptMessage>)pendingScriptMessages.clone();
+                     pendingScriptMessages.clear();
+                 }
+             }
+
+             for (int i=0;smsgToSend!=null && i<smsgToSend.size();i++) {
+                 PendingScriptMessage smsg=smsgToSend.get(i);
+                 Message msg=new MessageBuf();
+                 msg.addstring(smsg.type);
+                 msg.addlist(smsg.args);
+                 mc.sendMessage(SMSG_SCRIPT_MSG,msg.getWriteBuffer());
+             }
          }
 
          @Override
@@ -130,7 +146,18 @@ class ScriptCommunicator {
         boolean incoming=false;
     }
 
+    class PendingScriptMessage {
+        public PendingScriptMessage(String type,List args) {
+            this.type=type;
+            this.args=args;
+        }
+
+        String type;
+        List args;
+    }
+
     ArrayList<LoggedMessage> events=new ArrayList<LoggedMessage>();
+    ArrayList<PendingScriptMessage> pendingScriptMessages=new ArrayList<PendingScriptMessage>();
 
     public void notifyMessageReceived(PMessage msg) {
         synchronized(this) {
@@ -145,6 +172,12 @@ class ScriptCommunicator {
     public void notifyMessageSent(byte[] msg) {
         synchronized(this) {
             events.add(new LoggedMessage(msg,false));
+        }
+    }
+
+    public void sendScriptMessage(String type,List args) {
+        synchronized(pendingScriptMessages) {
+            pendingScriptMessages.add(new PendingScriptMessage(type,args));
         }
     }
 
