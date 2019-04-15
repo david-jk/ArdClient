@@ -2027,6 +2027,12 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
         Gob player = player();
         if (player == null)
             return;
+
+        if (ui.sess.scriptCommunicator!=null && ui.sess.scriptCommunicator.getCurrentClientCount()>0) {
+            ui.sess.scriptCommunicator.sendScriptMessage("pfLeftClick",mc);
+            return;
+        }
+
         synchronized (Pathfinder.class) {
             if (pf != null) {
                 pf.terminate = true;

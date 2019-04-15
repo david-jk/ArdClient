@@ -79,6 +79,7 @@ public class Session implements Resource.Resolver {
     private int localCacheId = -1;
     private String sessionName=Long.toString(System.nanoTime());
     public static final boolean savePackets=System.getenv("SAVE_PACKETS")!=null;
+    public ScriptCommunicator scriptCommunicator=null;
     private SessionLogger logger=new SessionLogger();
 
     @SuppressWarnings("serial")
@@ -664,7 +665,10 @@ public class Session implements Resource.Resolver {
     }
 
     public Session(SocketAddress server, String username, byte[] cookie, Object... args) {
-        if (ScriptCommunicator.globalInstance!=null)ScriptCommunicator.globalInstance.setSession(this);
+        if (ScriptCommunicator.globalInstance!=null) {
+            this.scriptCommunicator=ScriptCommunicator.globalInstance;
+            this.scriptCommunicator.setSession(this);
+        }
         this.server = server;
         this.username = username;
         this.cookie = cookie;

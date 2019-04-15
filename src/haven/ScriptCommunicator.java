@@ -17,6 +17,8 @@ class ScriptCommunicator {
     private int port=0;
     private Session session;
 
+    private Integer currentClientCount=new Integer(0);
+
     public ScriptCommunicator() throws IOException {
         for (int p=9411;p<=9419;p++) {
             try {
@@ -44,6 +46,10 @@ class ScriptCommunicator {
          }
 
          public void run() {
+             synchronized(currentClientCount) {
+                 currentClientCount++;
+             }
+
              try {
                  InputStream in=s.getInputStream();
                  DataOutputStream out=new DataOutputStream(s.getOutputStream());
@@ -58,6 +64,10 @@ class ScriptCommunicator {
                 }
             }
             catch(Exception ex) {}
+
+            synchronized(currentClientCount) {
+                 currentClientCount--;
+             }
          }
 
          public void sendPendingEvents() {
@@ -147,13 +157,13 @@ class ScriptCommunicator {
     }
 
     class PendingScriptMessage {
-        public PendingScriptMessage(String type,List args) {
+        public PendingScriptMessage(String type,Object[] args) {
             this.type=type;
             this.args=args;
         }
 
         String type;
-        List args;
+        Object[] args;
     }
 
     ArrayList<LoggedMessage> events=new ArrayList<LoggedMessage>();
@@ -175,9 +185,15 @@ class ScriptCommunicator {
         }
     }
 
-    public void sendScriptMessage(String type,List args) {
+    public void sendScriptMessage(String type,Object... args) {
         synchronized(pendingScriptMessages) {
             pendingScriptMessages.add(new PendingScriptMessage(type,args));
+        }
+    }
+
+    public int getCurrentClientCount() {
+        synchronized(currentClientCount) {
+            return currentClientCount;
         }
     }
 
