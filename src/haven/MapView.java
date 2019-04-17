@@ -306,9 +306,9 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
         }
 
         public boolean wheel(Coord c, int amount) {
-            float d = dist + (amount * Config.badcamsensitivity * 2);
-            if (d < 10)
-                d = 10;
+            float d = dist + (amount * Config.badcamsensitivity * 4);
+            if (d < 20)
+                d = 20;
             dist = d;
             return (true);
         }
