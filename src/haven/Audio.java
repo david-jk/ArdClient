@@ -37,7 +37,6 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.SourceDataLine;
 
 import dolda.xiphutil.VorbisStream;
-import haven.purus.BotUtils;
 
 public class Audio {
     public static boolean enabled = true;
@@ -596,7 +595,12 @@ public class Audio {
         }
     }
 
-    public static void play(Resource res) { play(fromres(res)); }
+    public static void play(Resource res) {
+        if(res.name.equals("sfx/msg"))
+            play(res,Config.sfxdingvol);
+        else
+            play(fromres(res));
+    }
 
     public static void play(Resource res, double vol)
     {
@@ -608,6 +612,17 @@ public class Audio {
             public void run() {
                 try {
                     play(clip.get());
+                } catch (Loading e) {
+                    queue(this);
+                }
+            }
+        });
+    }
+    public static void play(final Indir<Resource> clip, double vol) {
+        queue(new Runnable() {
+            public void run() {
+                try {
+                    play(clip.get(),vol);
                 } catch (Loading e) {
                     queue(this);
                 }

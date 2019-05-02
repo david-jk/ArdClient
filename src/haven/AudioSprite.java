@@ -86,12 +86,16 @@ public class AudioSprite {
                 stream = new Audio.VolAdjust(stream, 0.2);
             else if (Config.sfxquernvol != 1.0 && "sfx/terobjs/quern".equals(res.name))
                 stream = new Audio.VolAdjust(stream, Config.sfxquernvol);
+            else if(Config.sfxdoorvol != 1.0 && "sfx/terobjs/arch/door".equals(res.name))
+                stream = new Audio.VolAdjust(stream, Config.sfxdoorvol);
             else if(Config.sfxclapvol != 1.0 && "sfx/borka/clap".equals(res.name))
             	stream = new Audio.VolAdjust(stream, Config.sfxclapvol);
             else if(Config.sfxchatvol != 1.0 && "sfx/hud/chat".equals(res.name))
                 stream = new Audio.VolAdjust(stream, Config.sfxchatvol);
             else if(Config.sfxwhistlevol != 1.0 && "sfx/borka/whistle".equals(res.name))
                 stream = new Audio.VolAdjust(stream, Config.sfxwhistlevol);
+            else if(Config.sfxdingvol != 1.0 && "sfx/msg".equals(res.name))
+                stream = new Audio.VolAdjust(stream,Config.sfxdingvol);
 
 
 

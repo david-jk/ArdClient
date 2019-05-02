@@ -53,6 +53,10 @@ public class Coord3f {
         return ((o.x == x) && (o.y == y) && (o.z == z));
     }
 
+    public boolean equals(Object o) {
+        return((o instanceof Coord3f) && equals((Coord3f)o));
+    }
+
     public Coord3f add(float ax, float ay, float az) {
         return (new Coord3f(x + ax, y + ay, z + az));
     }
@@ -112,6 +116,11 @@ public class Coord3f {
     public Coord3f cmul(Coord3f b) {
         return (cmul(b.x, b.y, b.z));
     }
+
+    public Coord round() {
+        return new Coord(Math.round(x), Math.round(y));
+    }
+
 
     public Coord3f rot(Coord3f p, float a) {
         float c = (float) Math.cos(a), s = (float) Math.sin(a), C = 1.0f - c;

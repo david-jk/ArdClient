@@ -7,8 +7,8 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 
 import haven.*;
-import haven.purus.BotUtils;
 import haven.purus.pbot.PBotAPI;
+import haven.purus.pbot.PBotUtils;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 
@@ -108,7 +108,7 @@ public class SteelRefueler extends Window implements GobSelectCallback {
         @Override
         public void run() {
             GameUI gui = gameui();
-            while (!terminate) {
+            while (!terminate || gui.getwnd("Steel Refueler") != null ) {
                 if(!ui.sess.alive()) {
                     if (Discord.jdalogin != null) {
                         for (TextChannel loop : haven.automation.Discord.channels) {
@@ -139,15 +139,8 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     int fuelticks = 5; // branch
 
                     // navigate to crucible
-                  //  System.out.println("Before move to crucible");
                   //  gui.map.pfRightClick(c, -1, 3, 1, null);
-                    PBotAPI.pfRightClick(c,0);
-                    try {
-                        gui.map.pfthread.join();
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                    //System.out.println("After move to crucible");
+                    PBotUtils.pfRightClick(c,0);
 
                     if (terminate)
                         return;
@@ -162,18 +155,18 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     int retry = 0;
                     while(gui.getwnd("Steelbox") == null) {
                         retry++;
-                        BotUtils.sleep(10);
+                        PBotUtils.sleep(10);
                         if (retry >= 1000) {
                             retry=0;
-                            BotUtils.sysLogAppend("Unstucking", "white");
+                            PBotUtils.sysLogAppend("Unstucking", "white");
                             Gob player = gui.map.player();
                             Coord location = player.rc.floor(posres);
                             int x = location.x + getrandom();
                             int y = location.y + getrandom();
                             Coord finalloc = new Coord(x, y);
                             gameui().map.wdgmsg("click", Coord.z, finalloc, 1, 0);
-                            BotUtils.sleep(1000);
-                            BotUtils.pfRightClick(c,0);
+                            PBotUtils.sleep(1000);
+                            PBotUtils.pfRightClick(c,0);
                         }
                     }
                    // System.out.println("Grab Steelbox window");
@@ -186,7 +179,7 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     //grabs percentage steel is finished
                     for (Widget w = cwnd.lchild; w != null; w = w.prev) {
                         if (w instanceof Inventory)
-                            ItemList = BotUtils.getInventoryContents((Inventory) w);
+                            ItemList = PBotUtils.getInventoryContents((Inventory) w);
                         try {
                             for (WItem loop : ItemList)
                                 if (loop.itemmeter.get() > 0)
@@ -204,7 +197,6 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     int fueltoload = (100 - vm.amount) / fuelticks;
 
                     // take fuel
-                   // System.out.println("Take fuel");
                     if(fuel == null){//this shouldn't happen, assume the worst and just close.
                         terminate = true;
                         terminate();
@@ -223,9 +215,7 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                         }
                     }
                     int curbranches = gui.maininv.getItemPartialCount("Branch");
-                 //   System.out.println("branches : "+curbranches);
-                 //   System.out.println("Loading : "+fueltoload);
-                    int freeslots = BotUtils.invFreeSlots();
+                    int freeslots = PBotUtils.invFreeSlots();
                     for (; fueltoload > 0; fueltoload--) {
 
                         if (terminate)
@@ -255,18 +245,18 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     // if the crucible is full already we'll end up with a stockpile on the cursor
                     if (hand != null) {
                         gui.map.wdgmsg("place", Coord.z, 0, 3, 0);
-                        Coord slot = BotUtils.getFreeInvSlot(BotUtils.playerInventory());
+                        Coord slot = PBotUtils.getFreeInvSlot(PBotAPI.gui.maininv);
                         if (slot != null) {
-                            BotUtils.dropItemToInventory(slot, BotUtils.playerInventory());
-                            while (BotUtils.getItemAtHand() != null)
-                                BotUtils.sleep(10);
+                            PBotUtils.dropItemToInventory(slot, PBotAPI.gui.maininv);
+                            while (PBotUtils.getItemAtHand() != null)
+                                PBotUtils.sleep(10);
                         }
                     }
                  //   System.out.println("Refueled with "+(curbranches - gui.maininv.getItemPartialCount("Branch")));
                  //   System.out.println("Branches in inv : "+gui.maininv.getItemPartialCount("Branch"));
                 }
-                Collections.sort(completepercent);
-                lowest = completepercent.get(0);
+
+
                 if(reportouttimer == 4)
                     reportouttimer = 1;
                 if(reportouttimer == 1) {
@@ -274,6 +264,9 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                         for (Widget w = gui.chat.lchild; w != null; w = w.prev) {
                             if (w instanceof ChatUI.DiscordChannel) {
                                 if (((ChatUI.DiscordChannel) w).name().contains("steel")) {
+                                    Collections.sort(completepercent);
+                                    if(completepercent.size()>0)
+                                        lowest = completepercent.get(0);
                                     ((ChatUI.DiscordChannel) w).send("!check");
                                     ((ChatUI.DiscordChannel) w).send("Lowest Complete % was : " + round(lowest, 2));
                                 }
@@ -340,20 +333,16 @@ public class SteelRefueler extends Window implements GobSelectCallback {
     private class selectingarea implements Runnable {
         @Override
         public void run() {
-            BotUtils.sysMsg("Drag area over smelters/Ovens", Color.WHITE);
-            PBotAPI.selectArea();
-            //gui.map.PBotAPISelect = true;
-            // while(gui.map.PBotAPISelect)
-            //BotUtils.sleep(100);
-            // BotUtils.sysMsg("Adding", Color.WHITE);
+            PBotUtils.sysMsg("Drag area over smelters/Ovens", Color.WHITE);
+            PBotUtils.selectArea();
             try {
-                selectedAreaA = PBotAPI.getSelectedAreaA();
-                selectedAreaB = PBotAPI.getSelectedAreaB();
+                selectedAreaA = PBotUtils.getSelectedAreaA();
+                selectedAreaB = PBotUtils.getSelectedAreaB();
                 crucibles.addAll(Crucibles());
                 stockpiles.addAll(Stockpiles());
                 lbls.settext(stockpiles.size() + "");
                 lblc.settext(crucibles.size() + "");
-            }catch(NullPointerException q){BotUtils.sysMsg("Error detected, please reopen the bot and try again.",Color.white);}
+            }catch(NullPointerException q){PBotUtils.sysMsg("Error detected, please reopen the bot and try again.",Color.white);}
         }
     }
 
@@ -370,13 +359,11 @@ public class SteelRefueler extends Window implements GobSelectCallback {
                     continue;
             }
 
-            // navigate to the stockpile and load up on fuel
-            gameui().map.pfRightClick(s, -1, 3, 1, null);
-            try {
-                gui.map.pfthread.join();
-            } catch (InterruptedException e) {
-                return;
-            }
+            PBotUtils.pfRightClick(s,1);
+            while(!PBotUtils.player().isMoving())
+                PBotUtils.sleep(10); //wait to start moving
+            while(PBotUtils.player().isMoving())
+                PBotUtils.sleep(10); //wait till we stop moving
 
             // return if got enough fuel
             int availableFuelCoal = gui.maininv.getItemPartialCount("Coal");

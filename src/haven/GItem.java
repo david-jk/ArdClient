@@ -27,6 +27,7 @@
 package haven;
 
 import static haven.Text.num10Fnd;
+import static haven.Text.num12boldFnd;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -34,9 +35,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import haven.automation.BeltDrink;
 import haven.automation.MinerAlert;
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotAPI;
+import haven.purus.pbot.PBotUtils;
 import haven.res.ui.tt.q.qbuff.QBuff;
 
 public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owner {
@@ -114,7 +115,10 @@ public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owne
         }
 
         public static BufferedImage numrender(int num, Color col) {
+            if(!Config.largeqfont)
             return Text.renderstroked(num + "", col, Color.BLACK).img;
+            else
+                return Text.renderstroked(num + "", col, Color.BLACK,num12boldFnd).img;
         }
     }
 
@@ -305,25 +309,41 @@ public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owne
     }
 
     private void dropItMaybe() {
-        Resource curs = ui.root.getcurs(Coord.z);
-      //  GameUI gui = gameui();
-        if (curs != null && curs.name.equals("gfx/hud/curs/mine")) {
-           /* IMeter.Meter stam = gui.getmeter("stam", 0);
-            if (stam.a < 40) {
-                Thread i = new Thread(new BeltDrink(gui), "BeltDrink");
-                i.start();
-            }*/
+        try {
+            Resource curs = ui.root.getcurs(Coord.z);
             String name = this.resource().basename();
-            if (Config.dropMinedStones && Config.mineablesStone.contains(name) ||
-                    Config.dropMinedOre && Config.mineablesOre.contains(name) ||
-                    Config.dropMinedOrePrecious && Config.mineablesOrePrecious.contains(name) ||
-                    Config.dropMinedCatGold && this.getname().contains("Cat Gold") ||
-                    Config.dropMinedCrystals && this.getname().contains("Strange Crystal") ||
-                    Config.dropMinedSeaShells && this.getname().contains("Petrified Seashell"))
+            if ((Config.dropSoil && name.equals("soil")))
                 this.wdgmsg("drop", Coord.z);
+            if (curs != null && curs.name.equals("gfx/hud/curs/mine")) {
+                if (PBotUtils.getStamina() < 40) {
+                    PBotUtils.drink(false);
+                }
+                if (Config.dropMinedStones && Config.mineablesStone.contains(name) ||
+                        Config.dropMinedOre && Config.mineablesOre.contains(name) ||
+                        Config.dropMinedOrePrecious && Config.mineablesOrePrecious.contains(name) ||
+                        Config.dropMinedCatGold && this.getname().contains("Cat Gold") ||
+                        Config.dropMinedCrystals && this.getname().contains("Strange Crystal") ||
+                        Config.dropMinedSeaShells && this.getname().contains("Petrified Seashell"))
+                    this.wdgmsg("drop", Coord.z);
+            }
+            if (Config.DropCattails && (name.equals("cattailroots") || name.equals("cattailhead")))
+                this.wdgmsg("drop", Coord.z);
+
+            if (Config.DropEntrails && this.getname().contains("Entrails") || Config.DropIntestines && this.getname().contains("Intestines")
+                    || Config.DropMeat && this.getname().contains("Raw") || Config.DropBones && this.getname().contains("Bone Material"))
+                this.wdgmsg("drop", Coord.z);
+        }catch(Resource.Loading e){e.printStackTrace(); }
+    }
+    public Coord size() {
+        Indir<Resource> res = getres().indir();
+        if (res.get() != null && res.get().layer(Resource.imgc) != null) {
+            Tex tex = res.get().layer(Resource.imgc).tex();
+            if(tex == null)
+                return new Coord(1, 1);
+            else
+                return tex.sz().div(30);
+        } else {
+            return new Coord(1, 1);
         }
-        if(Config.DropEntrails && this.getname().contains("Entrails") || Config.DropIntestines && this.getname().contains("Intestines")
-                || Config.DropMeat && this.getname().contains("Raw") || Config.DropBones && this.getname().contains("Bone Material"))
-            this.wdgmsg("drop", Coord.z);
     }
 }

@@ -26,7 +26,7 @@
 
 package haven;
 
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotUtils;
 import haven.resutil.Curiosity;
 import haven.resutil.FoodInfo;
 import static haven.PUtils.blurmask2;
@@ -563,10 +563,6 @@ public class CharWnd extends Window {
 
         public void lvlup() {
             lvlt = 1.0;
-	  //  if(ui != null){
-		//ui.message(String.format("Your %s leveled up!", rnm.text), GameUI.MsgType.GOOD);
-		//BotUtils.sysMsg("Your "+rnm.text+" leveled up!", green);
-	  //  }
         }
     }
 
@@ -1239,6 +1235,10 @@ public class CharWnd extends Window {
                 this.title = Resource.getLocString(Resource.BUNDLE_LABEL, title);
             }
 
+            public int id() {
+                return this.id;
+            }
+
             public String title() {
                 if(title != null)
                     return(title);
@@ -1312,6 +1312,7 @@ public class CharWnd extends Window {
                         ncond.add(cond);
                     }
                     this.cond = ncond.toArray(new Condition[0]);
+                    this.gameui().questhelper.addConds(ncond, this.cqv.info.id());
                     refresh();
                     if (cqv != null)
                         cqv.update();
@@ -1346,7 +1347,7 @@ public class CharWnd extends Window {
 
             public interface QVInfo {
                 public String title();
-
+                int id();
                 public Condition[] conds();
             }
 
@@ -1556,8 +1557,6 @@ public class CharWnd extends Window {
         public static class $quest implements Factory {
             public Widget create(UI ui, Object[] args) {
                 int id = (Integer) args[0];
-                //for(Object obj : args)
-                  //  System.out.println(" args : "+obj);
                 Indir<Resource> res = ui.sess.getres((Integer) args[1]);
                 String title = (args.length > 2)?(String)args[2]:null;
                 return(new DefaultBox(id, res, title));
@@ -1961,7 +1960,6 @@ public class CharWnd extends Window {
         }
 
         protected void drawitem(GOut g, Quest q, int idx) {
-           // if(ui.Questnumberarray.contains(q.id)) remove(q);
             if ((quest != null) && (quest.questid() == q.id))
                 drawsel(g);
             g.chcolor((idx % 2 == 0) ? every : other);
@@ -1983,7 +1981,7 @@ public class CharWnd extends Window {
                 abandonquest = true;
                 CharWnd.this.wdgmsg("qsel", (Object) null);
                 CharWnd.this.wdgmsg("qsel", q.id);
-                BotUtils.sysMsg("Dropping quest : "+q.title,green);
+                PBotUtils.sysMsg("Dropping quest : "+q.title,green);
                 remove(q);
             } else
             change(q);
@@ -1993,6 +1991,8 @@ public class CharWnd extends Window {
         }
 
         public void change(Quest q) {
+            if(!gameui().questwnd.visible)
+                gameui().questwnd.show();
             if((q == null) || ((CharWnd.this.quest != null) && (q.id == CharWnd.this.quest.questid())))
                 CharWnd.this.wdgmsg("qsel", (Object) null);
             else
@@ -2036,7 +2036,7 @@ public class CharWnd extends Window {
     }
 
     public CharWnd(Glob glob) {
-        super(new Coord(300, 290), "Character Sheet");
+        super(Coord.z, "Character Sheet", "Character Sheet");
 
         final Tabs tabs = new Tabs(new Coord(15, 10), Coord.z, this);
         Tabs.Tab battr;
@@ -2650,6 +2650,7 @@ public class CharWnd extends Window {
                     dqst.remove(id);
                 }
             }
+            this.gameui().questhelper.refresh();
         } else {
             super.uimsg(nm, args);
         }

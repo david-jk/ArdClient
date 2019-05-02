@@ -34,6 +34,7 @@ import haven.MapMesh.Scan;
 import haven.Surface.Vertex;
 import haven.Surface.MeshVertex;
 import com.jogamp.opengl.*;
+import haven.glsl.Type;
 
 import javax.media.opengl.GL;
 import java.awt.Color;
@@ -66,7 +67,7 @@ public class WaterTile extends Tiler {
             s = new boolean[ss.l];
             ed = new int[ss.l];
 	    for(int y = ds.ul.y; y < ds.br.y; y++) {
-		for(int x = ds.ul.y; x < ds.br.x; x++) {
+                for (int x = ds.ul.x; x < ds.br.x; x++) {
                     Tiler t = map.tiler(map.gettile(m.ul.add(x, y)));
 		    if(t instanceof WaterTile)
 			d[ds.o(x, y)] = ((WaterTile)t).depth;
@@ -350,8 +351,8 @@ public class WaterTile extends Tiler {
     }
 
 
-    public static final BottomFog waterfog = new BottomFog(new Color(0, 16, 48));
-    public static final BottomFog deepfog = new BottomFog(new Color(0, 0, 0));
+    public static final BottomFog waterfog = new BottomFog(DefSettings.ALLWATERCOL.get());
+    public static final BottomFog deepfog = new BottomFog(DefSettings.DEEPWATERCOL.get());
     private static final GLState boff = new States.DepthOffset(4, 4);
 
     public static final GLState obfog = new GLState.StandAlone(GLState.Slot.Type.DRAW) {

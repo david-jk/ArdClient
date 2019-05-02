@@ -43,6 +43,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.*;
 import java.util.*;
@@ -385,7 +386,7 @@ public class Utils {
         }
     }
 
-    static void setprefd(String prefname, double val) {
+    public static void setprefd(String prefname, double val) {
         try {
             prefs().putDouble(prefname, val);
         } catch (SecurityException e) {
@@ -874,7 +875,7 @@ public class Utils {
         }
     }
 
-    static byte[] readall(InputStream in) throws IOException {
+    public static byte[] readall(InputStream in) throws IOException {
         byte[] buf = new byte[4096];
         int off = 0;
         while (true) {
@@ -1001,6 +1002,25 @@ public class Utils {
                 ((col & 0x0f00) >> 8) * 17,
                 ((col & 0x00f0) >> 4) * 17,
                 ((col & 0x000f) >> 0) * 17));
+    }
+
+    public static BufferedImage hconcat(final BufferedImage... imgs) {
+        int width = 0;
+        int height = 0;
+        for(final BufferedImage img : imgs) {
+            width += img.getWidth();
+            height = Math.max(height, img.getHeight());
+	}
+
+        final BufferedImage img = TexI.mkbuf(new Coord(width, height));
+        final Graphics g = img.createGraphics();
+        int x = 0;
+        for(final BufferedImage i : imgs) {
+            g.drawImage(i, x, 0, null);
+            x += i.getWidth();
+	}
+        g.dispose();
+        return img;
     }
 
     public static BufferedImage outline(BufferedImage img, Color col) {

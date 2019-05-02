@@ -1,8 +1,8 @@
 package haven;
 
 
-import haven.purus.BotUtils;
-import haven.purus.pbot.PBotAPI;
+
+import haven.purus.pbot.PBotUtils;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -109,21 +109,39 @@ public class InventoryBelt extends Widget implements DTarget {
         return null;
     }
 
+    public List<Coord> getFreeSlots() {
+        List<Coord> cordlist = new ArrayList<>();
+        int[][] invTable = new int[isz.x][isz.y];
+        // System.out.println(isz.x +", " + isz.y);
+        for (Widget wdg = child; wdg != null; wdg = wdg.next) {
+            if (wdg instanceof WItem) {
+                WItem item = (WItem) wdg;
+                for(int i=0; i<item.sz.div(sqsz).y; i++)
+                    for(int j=0; j<item.sz.div(sqsz).x; j++)
+                        invTable[item.c.div(sqsz).x+j][item.c.div(sqsz).y+i] = 1;
+            }
+        }
+        for(int i=0; i<isz.y; i++) {
+            for(int j=0; j<isz.x; j++) {
+                if(invTable[j][i] == 0)
+                    cordlist.add(new Coord(j,i));
+            }
+        }
+        return cordlist;
+    }
+
     public WItem getItemPartialDrink(String name) {
         for (Widget wdg = child; wdg != null; wdg = wdg.next) {
             if (wdg instanceof WItem) {
                 String wdgname = ((WItem) wdg).item.getname();
                 if (wdgname.contains(name))
-                    if (!PBotAPI.canDrinkFrom((WItem) wdg))
-                       // BotUtils.sysMsg("no water in skin", Color.WHITE);
+                    if (!PBotUtils.canDrinkFrom((WItem) wdg))
                          return null;
-                        if (PBotAPI.canDrinkFrom((WItem) wdg)) {
-                           // BotUtils.sysMsg("water in skin", Color.WHITE);
+                        if (PBotUtils.canDrinkFrom((WItem) wdg)) {
                             return (WItem) wdg;
                         }
             }
         }
-       // BotUtils.sysMsg("drinkable check not working", Color.WHITE);
           return null;
     }
 

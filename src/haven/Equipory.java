@@ -34,7 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import haven.purus.BotUtils;
+
 import haven.res.ui.tt.Armor;
 
 public class Equipory extends Widget implements DTarget {
@@ -142,7 +142,7 @@ public class Equipory extends Widget implements DTarget {
 
     @Override
     public void tick(double dt) {
-        if (Config.quickbelt && ui.beltWndId == -1 && ((Window) parent).origcap.equals("Equipment")) {
+        if (Config.quickbelt && ui.beltWndId == -1 && ((Window) parent).cap.toString().equals("Equipment")) {
             for (WItem itm[] : wmap.values()) {
                 try {
                     if (itm.length > 0 && itm[0].item.res.get().name.endsWith("belt"))

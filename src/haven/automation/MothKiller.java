@@ -3,7 +3,7 @@ package haven.automation;
 
 import haven.*;
 import haven.Window;
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotUtils;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -41,16 +41,17 @@ public class MothKiller implements Runnable {
              //  trays2.addAll(trays);
         if(moths!=null)
         if(moths.size() > 0)
-        BotUtils.sysMsg("Found "+moths.size()+" to kill.",Color.white);
+            PBotUtils.sysMsg("Found "+moths.size()+" to kill.",Color.white);
         for (WItem item : moths) {
                 FlowerMenu.setNextSelection("Kill");
                 item.item.wdgmsg("iact", Coord.z, -1);
-                BotUtils.sleep(1000);
+            PBotUtils.sleep(1000);
         }
-        BotUtils.sysMsg("Done",Color.white);
+        PBotUtils.sysMsg("Done",Color.white);
     }
     private List<WItem> getMoths (Inventory inv){
         List<WItem> moths = inv.getItemsPartial("Cocoon");
+        moths.addAll(inv.getItemsPartial("Chrysalis"));
         // BotUtils.sysMsg("trying to find trays", Color.WHITE);
         if(moths == null)
             return null;
@@ -59,6 +60,8 @@ public class MothKiller implements Runnable {
 
     private WItem getMoths2 (Inventory inv){
         WItem moths = inv.getItemPartialTrays("Cocoon");
+        if(moths == null)
+            moths = inv.getItemPartialTrays("Chrysalis");
         // BotUtils.sysMsg("trying to find trays", Color.WHITE);
         if(moths == null)
             return null;

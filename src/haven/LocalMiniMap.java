@@ -26,8 +26,9 @@
 
 package haven;
 
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotUtils;
 import haven.resutil.Ridges;
+import haven.sloth.gob.Type;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -51,9 +52,15 @@ public class LocalMiniMap extends Widget {
     private UI.Grab dragging;
     private Coord doff = Coord.z;
     private Coord delta = Coord.z;
+    private boolean showGrid = DefSettings.MMSHOWGRID.get();
+    private boolean showView = DefSettings.MMSHOWVIEW.get();
 
 
 	private final HashSet<Long> sgobs = new HashSet<Long>();
+
+	private float zoom = 1f; //zoom multiplier
+	private float iconZoom = 1f; //zoom multiplier for minimap icons
+
     private final Map<Coord, Tex> maptiles = new LinkedHashMap<Coord, Tex>(100, 0.75f, false) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Coord, Tex> eldest) {
@@ -97,6 +104,7 @@ public class LocalMiniMap extends Widget {
             this.seq = seq;
         }
     }
+
 
     private BufferedImage tileimg(int t, BufferedImage[] texes) {
         BufferedImage img = texes[t];
@@ -174,11 +182,11 @@ public class LocalMiniMap extends Widget {
     }
 
     public Coord p2c(Coord2d pc) {
-        return (pc.floor(tilesz).sub(cc).add(sz.div(2)));
+    	return (pc.floor(tilesz).sub(cc).mul(zoom).add(sz.div(2)));
     }
 
     public Coord2d c2p(Coord c) {
-        return (c.sub(sz.div(2)).add(cc).mul(tilesz).add(tilesz.div(2)));
+        return (c.sub(sz.div(2)).div(zoom).add(cc).mul(tilesz).add(tilesz.div(2)));
     }
 
     public void drawicons(GOut g) {
@@ -194,76 +202,56 @@ public class LocalMiniMap extends Widget {
 
                     GobIcon icon = gob.getattr(GobIcon.class);
                     if (icon != null && !Config.hideallicons || Config.additonalicons.containsKey(res.name) && !Config.hideallicons) {
-                        if (Gob.Type.MOB.has(gob.type)){
-                            dangergobs.add(0,gob);
-                       }else{
                         CheckListboxItem itm = Config.icons.get(res.basename());
                         if (itm == null || !itm.selected) {
                             Tex tex;
                             if (icon != null)
-                                tex = gob.knocked == Boolean.TRUE ? icon.texgrey() : icon.tex();
+                                tex = gob.isDead() == Boolean.TRUE ? icon.texgrey() : icon.tex();
                             else
                                 tex = Config.additonalicons.get(res.name);
-                            g.image(tex, p2c(gob.rc).sub(tex.sz().div(2)).add(delta));
+                                g.image(tex, p2c(gob.rc).sub(tex.sz().mul(iconZoom).div(2)).add(delta), tex.dim.mul(iconZoom));
                         }
-                    }
-                    } else if (gob.type == Gob.Type.PLAYER && player != null && gob.id != player.id) {
+                    } else if (gob.type == Type.HUMAN && player != null && gob.id != player.id) {
                         dangergobs.add(gob);
                         continue;
                     }
 
                     String basename = res.basename();
-                    if (gob.type == Gob.Type.BOULDER) {
+                    if (gob.type == Type.BOULDER) {
                         CheckListboxItem itm = Config.boulders.get(basename.substring(0, basename.length() - 1));
                         if (itm != null && itm.selected)
                             g.image(bldricn, p2c(gob.rc).add(delta).sub(bldricn.sz().div(2)));
-                    } else if (gob.type == Gob.Type.BUSH) {
+                    } else if (gob.type == Type.BUSH) {
                         CheckListboxItem itm = Config.bushes.get(basename);
                         if (itm != null && itm.selected)
                             g.image(bushicn, p2c(gob.rc).add(delta).sub(bushicn.sz().div(2)));
-                    } else if (gob.type == Gob.Type.TREE || gob.type == Gob.Type.OLDTRUNK) {
+                    } else if (gob.type == Type.TREE) {
                         CheckListboxItem itm = Config.trees.get(basename);
                         if (itm != null && itm.selected)
                             g.image(treeicn, p2c(gob.rc).add(delta).sub(treeicn.sz().div(2)));
                     }
-                    else if(gob.type == Gob.Type.ROAD && Config.showroadmidpoint){
+                    else if(gob.type == Type.ROAD && Config.showroadmidpoint){
                         g.image(roadicn, p2c(gob.rc).sub(roadicn.sz().div(2)).add(delta));
                     }
-                    else if(gob.type == Gob.Type.ROADENDPOINT && Config.showroadendpoint){
+                    else if(gob.type == Type.ROADENDPOINT && Config.showroadendpoint){
                         g.image(roadicn, p2c(gob.rc).sub(roadicn.sz().div(2)).add(delta));
                     }
-                    else if(gob.type == Gob.Type.DUNGEONDOOR) {
+                    else if(gob.type == Type.DUNGEONDOOR) {
                         int stage = 0;
                         if(gob.getattr(ResDrawable.class) != null)
                             stage = gob.getattr(ResDrawable.class).sdt.peekrbuf(0);
                         if(stage == 10 || stage == 14)
                         g.image(dooricn, p2c(gob.rc).sub(dooricn.sz().div(2)).add(delta));
                     }
+
+                    if (sgobs.contains(gob.id))
+                        continue;
                 } catch (Loading l) {}
             }
 
             for (Gob gob : dangergobs) {
                 try {
-                    GobIcon icon = gob.getattr(GobIcon.class);
-                    if (icon != null) {
-                        Tex tex;
-                        if (icon != null)
-                            tex = gob.knocked == Boolean.TRUE ? icon.texgrey() : icon.tex();
-                        else
-                            tex = Config.additonalicons.get(gob.getres().name);
-                        g.image(tex, p2c(gob.rc).sub(tex.sz().div(2)).add(delta));
-                    }
-                } catch (Loading l) {
-                }
-            }
-            
-            for (Gob gob : oc) {
-                try {
-                    Resource res = gob.getres();
-                    if (res == null)
-                        continue;
-
-                    if (gob.type == Gob.Type.PLAYER && gob.id != mv.player().id) {
+                    if (gob.type == Type.HUMAN && gob.id != mv.player().id) {
                         if (ui.sess.glob.party.memb.containsKey(gob.id))
                             continue;
 
@@ -281,12 +269,9 @@ public class LocalMiniMap extends Widget {
                         if (sgobs.contains(gob.id))
                             continue;
 
-
-
                         boolean enemy = false;
                         if (!Config.alarmunknownplayer.equals("None") && kininfo == null) {
                             sgobs.add(gob.id);
-                           // Audio.play(alarmredplayersfx, Config.alarmunknownvol);
                             Audio.play(Resource.local().loadwait(Config.alarmunknownplayer), Config.alarmunknownvol);
                             enemy = true;
                         } else if (!Config.alarmredplayer.equals("None") && kininfo != null && kininfo.group == 2) {
@@ -296,69 +281,21 @@ public class LocalMiniMap extends Widget {
                         }
 
                         if (Config.autologout && enemy) {
-                            BotUtils.sysMsg("Ememy spotted! Logging out!",Color.white);
+                            PBotUtils.sysMsg("Ememy spotted! Logging out!",Color.white);
                             gameui().act("lo");
                         }
                         else if (Config.autohearth && enemy)
                             gameui().act("travel", "hearth");
 
-                        continue;
-                    }
-
-                    if (sgobs.contains(gob.id))
-                        continue;
-
-                    if (gob.type == Gob.Type.FU_YE_CURIO) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmforagable), Config.alarmonforagablesvol);
-                    } else if (!Config.alarmswag.equals("None") && gob.type == Gob.Type.LOC_RESOURCE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmswag), Config.alarmlocresvol);
-                    } else if (gob.type == Gob.Type.BEAR && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmbear), Config.alarmbearsvol);
-                    }else if (gob.type == Gob.Type.SNAKE && gob.knocked == Boolean.FALSE && !Config.alarmadder.equals("None")){
-                            this.sgobs.add(gob.id);
-                            Audio.play(Resource.local().loadwait(Config.alarmadder), Config.alarmaddervol);
-                    } else if (gob.type == Gob.Type.LYNX && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmlynx), Config.alarmbearsvol);
-                    } else if (gob.type == Gob.Type.WALRUS && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmwalrus), Config.alarmbearsvol);
-                    } else if (gob.type == Gob.Type.SEAL && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmseal), Config.alarmbearsvol);
-                    } else if (gob.type == Gob.Type.TROLL && gob.knocked == Boolean.FALSE && !Config.alarmtroll.equals("None")) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmtroll), Config.alarmtrollvol);
-                    } else if (gob.type == Gob.Type.MAMMOTH && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmmammoth), Config.alarmbearsvol);
-                    } else if (gob.type == Gob.Type.EAGLE && gob.knocked == Boolean.FALSE) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmeagle));
-                    } else if (!Config.alarmsiege.equals("None") && gob.type == Gob.Type.SIEGE_MACHINE) {
-                        this.sgobs.add(gob.id);
-                        if(!gob.getres().basename().contains("ball"))
-                        Audio.play(Resource.local().loadwait(Config.alarmsiege), Config.alarmbramvol);
-                    }else if (!Config.alarmwball.equals("None") && gob.type == Gob.Type.SIEGE_MACHINE){
-                        this.sgobs.add(gob.id);
-                        if(gob.getres().basename().contains("ball"))
-                            Audio.play(Resource.local().loadwait(Config.alarmwball), Config.alarmwballvol);
-                    }else if(gob.type == Gob.Type.DUNGKEY && Config.dungeonkeyalert) {
-                        this.sgobs.add(gob.id);
-                        BotUtils.sysMsg("Dungeon Key Dropped!",Color.white);
-                    }else if(gob.type == Gob.Type.NIDBANE && !Config.alarmnidbane.equals("None")) {
-                        this.sgobs.add(gob.id);
-                        Audio.play(Resource.local().loadwait(Config.alarmnidbane), Config.alarmnidbanevol);
-                    }else if(gob.type == Gob.Type.DUNGEON && !Config.alarmdungeon.equals("None")) {
-                        if(gob.getres().basename().equals("beaverdam")){
-                            this.sgobs.add(gob.id);
-                            Audio.play(Resource.local().loadwait(Config.alarmbeaverdungeon), Config.alarmdungeonvol);
-                        }else if(!gob.getres().basename().contains("beaver")) {
-                            this.sgobs.add(gob.id);
-                            Audio.play(Resource.local().loadwait(Config.alarmdungeon), Config.alarmdungeonvol);
+                    }else {
+                        GobIcon icon = gob.getattr(GobIcon.class);
+                        if (icon != null) {
+                            Tex tex;
+                            if (icon != null)
+                                tex = gob.isDead() == Boolean.TRUE ? icon.texgrey() : icon.tex();
+                            else
+                                tex = Config.additonalicons.get(gob.getres().name);
+                        g.image(tex, p2c(gob.rc).sub(tex.sz().mul(iconZoom).div(2)).add(delta), tex.dim.mul(iconZoom));
                         }
                     }
                 } catch (Exception e) { // fail silently
@@ -392,18 +329,18 @@ public class LocalMiniMap extends Widget {
                                 Resource res = gob.getres();
                                 KinInfo ki = gob.getattr(KinInfo.class);
                                 if (ki != null) {
-                                    if (gob.type == Gob.Type.PLAYER)
+                                    if (gob.type == Type.HUMAN)
                                         return gob;
                                 }
-                                else if (gob.type == Gob.Type.TREE) {
+                                else if (gob.type == Type.TREE) {
                                     CheckListboxItem itm = Config.trees.get(res.basename());
                                     if (itm != null && itm.selected)
                                         return gob;
-                                } else if (gob.type == Gob.Type.BUSH) {
+                                } else if (gob.type == Type.BUSH) {
                                     CheckListboxItem itm = Config.bushes.get(res.basename());
                                     if (itm != null && itm.selected)
                                         return gob;
-                                } else if (gob.type == Gob.Type.BOULDER) {
+                                } else if (gob.type == Type.BOULDER) {
                                     CheckListboxItem itm = Config.boulders.get(res.basename().substring(0, res.basename().length() - 1));
                                     if (itm != null && itm.selected)
                                         return gob;
@@ -440,7 +377,7 @@ public class LocalMiniMap extends Widget {
                         if (res != null && Config.additonalicons.containsKey(res.name)) {
                             CheckListboxItem itm = Config.icons.get(res.basename());
                             return pretty(itm.name);
-                        }else if (gob.type == Gob.Type.BOULDER)
+                        }else if (gob.type == Type.BOULDER)
                             return pretty(res.basename().substring(0, res.basename().length() - 1));
                         else
                             return pretty(gob.getres().basename());
@@ -508,10 +445,6 @@ public class LocalMiniMap extends Widget {
     public void draw(GOut g) {
         if (cc == null)
             return;
-      //  if(biometex != null) {
-        //    g.image(biometex, Coord.z);
-      //  }
-
         map:
         {
             final MCache.Grid plg;
@@ -562,15 +495,14 @@ public class LocalMiniMap extends Widget {
             }
         }
         if (cur != null) {
+    		int tileSize = (int)(100 * zoom);
+    		Coord ts = new Coord(tileSize, tileSize);
             int hhalf = sz.x / 2;
             int vhalf = sz.y / 2;
-
-            int ht = (hhalf / 100) + 2;
-            int vt = (vhalf / 100) + 2;
-
-            int pox = cur.grid.gc.x * 100 - cc.x + hhalf + delta.x;
-            int poy = cur.grid.gc.y * 100 - cc.y + vhalf + delta.y;
-
+            int ht = (hhalf / tileSize) + 2;
+            int vt = (vhalf / tileSize) + 2;
+            int pox = (int)((cur.grid.gc.x * 100 - cc.x) * zoom) + hhalf + delta.x;
+            int poy = (int)((cur.grid.gc.y * 100 - cc.y) * zoom) + vhalf + delta.y;
             int tox = pox / 100 - 1;
             int toy = poy / 100 - 1;
 
@@ -579,14 +511,14 @@ public class LocalMiniMap extends Widget {
                     for (int y = -vt; y < vt + vt; y++) {
                         Tex mt = maptiles.get(cur.grid.gc.add(x - tox, y - toy));
                         if (mt != null) {
-                            int mtcx = (x - tox) * 100 + pox;
-                            int mtcy = (y - toy) * 100 + poy;
-                            if (mtcx + 100 < 0 || mtcx > sz.x || mtcy + 100 < 0 || mtcy > sz.y)
+                            int mtcx = (x - tox) * tileSize + pox;
+                            int mtcy = (y - toy) * tileSize + poy;
+                            if (mtcx + tileSize < 0 || mtcx > sz.x || mtcy + tileSize < 0 || mtcy > sz.y)
                                 continue;
                             Coord mtc = new Coord(mtcx, mtcy);
-                            g.image(mt, mtc);
+                            g.image(mt, mtc, ts);
                             if (Config.mapshowgrid)
-                                g.image(gridred, mtc);
+                                g.image(gridred, mtc, ts);
                         }
                     }
                 }
@@ -597,7 +529,7 @@ public class LocalMiniMap extends Widget {
             if (Config.mapshowviewdist) {
                 Gob player = mv.player();
                 if (player != null)
-                    g.image(gridblue, p2c(player.rc).add(delta).sub(44, 44));
+                    g.image(gridblue, p2c(player.rc).add(delta).sub((int)(44 * zoom), (int)(44 * zoom)), gridblue.dim.mul(zoom));
             }
         }
         drawicons(g);
@@ -642,10 +574,22 @@ public class LocalMiniMap extends Widget {
                 g.chcolor();
             }
         }
+        if(MinimapWnd.biometex!=null)
+            g.image(MinimapWnd.biometex, Coord.z);
     }
 
     public void center() {
         delta = Coord.z;
+    }
+
+    public void toggleGrid() {
+        showGrid = !showGrid;
+        DefSettings.MMSHOWGRID.set(showGrid);
+    }
+
+    public void toggleView() {
+        showView = !showView;
+        DefSettings.MMSHOWVIEW.set(showView);
     }
 
     public boolean mousedown(Coord c, int button) {
@@ -663,12 +607,25 @@ public class LocalMiniMap extends Widget {
                 if (Config.pf && button==1 && curs!=null && !curs.name.equals("gfx/hud/curs/study")) {
                     mv.pfLeftClick(mc.floor(),null);
                 } else mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags());
+            }
+            if (gob == null) { //click tile
+                if(ui.modmeta && button == 1) {
+                    mv.queuemove(c2p(c.sub(delta)));
+                } else if (button == 1) {
+                    mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags());
+                    mv.clearmovequeue();
+                }
+                return true;
             } else {
                 mv.wdgmsg("click", rootpos().add(csd), mc.floor(posres), button, ui.modflags(), 0, (int) gob.id, gob.rc.floor(posres), 0, -1);
-                if (Config.autopickmussels && gob.type == Gob.Type.MUSSEL)
+            if (Config.autopickmussels && gob.getres() != null && (gob.getres().basename().contains("mussel") || gob.getres().basename().contains("oyster")))
+                mv.startMusselsPicker(gob);
+            if(Config.autopickclay && gob.getres() != null && gob.getres().basename().contains("clay-gray"))
+                mv.startMusselsPicker(gob);
+                if(Config.autopickbarnacles && gob.getres() != null && gob.getres().basename().contains("goosebarnacle"))
                     mv.startMusselsPicker(gob);
-                if(Config.autopickclay && gob.type == Gob.Type.CLAY)
-                    mv.startClayPicker(gob);
+                if(Config.autopickcattails && gob.getres() != null && gob.getres().basename().contains("cattail"))
+                    mv.startMusselsPicker(gob);
             }
         } else if (button == 2) {
             doff = c;
@@ -690,5 +647,15 @@ public class LocalMiniMap extends Widget {
             dragging = null;
         }
         return (true);
+    }
+
+    public boolean mousewheel(Coord c, int amount) {
+    	if (amount > 0 && zoom > 1)
+    		zoom = Math.round(zoom * 100 - 20) / 100f;
+    	else if (amount < 0 && zoom < 3)
+    		zoom = Math.round(zoom * 100 + 20) / 100f;
+
+    	iconZoom = Math.round((zoom - 1) * 100 / 2) / 100f + 1;
+    	return true;
     }
 }

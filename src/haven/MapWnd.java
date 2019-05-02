@@ -31,13 +31,7 @@ import static haven.MCache.tilesz;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -48,16 +42,20 @@ import haven.MapFile.SMarker;
 import haven.MapFileWidget.Locator;
 import haven.MapFileWidget.MapLocator;
 import haven.MapFileWidget.SpecLocator;
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotAPI;
+import haven.purus.pbot.PBotUtils;
+import haven.sloth.gob.Type;
 
 public class MapWnd extends Window {
     public static final Resource markcurs = Resource.local().loadwait("gfx/hud/curs/flag");
+    public static final Tex party = Resource.loadtex("custom/mm/pl/party");
+
     public final MapFileWidget view;
     public final MapView mv;
     public final MarkerList list;
     private final Locator player;
     private final Widget toolbar;
-    private final Widget zoombar;
+    public final Widget zoombar;
     private final Frame viewf, listf, fdropf;
     private final Dropbox<Pair<String, String>> fdrop;
     private TextEntry namesel;
@@ -67,14 +65,17 @@ public class MapWnd extends Window {
     private List<Marker> markers = Collections.emptyList();
     private int markerseq = -1;
     private boolean domark = false;
+    public Tex zoomtex = null;
     private final Collection<Runnable> deferred = new LinkedList<>();
     private static final Tex plx = Text.renderstroked("\u2716",  Color.red, Color.BLACK, Text.num12boldFnd).tex();
     private  Predicate<Marker> filter = (m -> true);
     private final static Comparator<Marker> namecmp = ((a, b) -> a.nm.compareTo(b.nm));
+    private Map<Color, Tex> xmap = new HashMap<Color, Tex>(6);
+    private Map<Long, Tex> namemap = new HashMap<>(50);
 
 
     public MapWnd(MapFile file, MapView mv, Coord sz, String title) {
-        super(sz, title, true);
+        super(sz, title,title, true);
         this.mv = mv;
         this.player = new MapLocator(mv);
         viewf = add(new Frame(Coord.z, true));
@@ -112,9 +113,8 @@ public class MapWnd extends Window {
         resize(sz);
     }
 
-    private class ZoomBar extends Widget {
+    public class ZoomBar extends Widget {
         private final static int btnsz = 21;
-        private Tex zoomtex = null;
         public ZoomBar() {
             super(new Coord(btnsz * 2 + 20, btnsz));
             add(new IButton("gfx/hud/worldmap/minus", "", "", "") {
@@ -192,17 +192,132 @@ public class MapWnd extends Window {
             return (super.mousedown(c, button));
         }
 
+
+
+        private Set<Long> drawparty(GOut g, final Location ploc) {
+            final Set<Long> ignore = new HashSet<>();
+            final Coord pc = new Coord2d(mv.getcc()).floor(tilesz);
+            double angle;
+            try {
+                synchronized (ui.sess.glob.party) {
+                    final Coord psz = party.sz();
+                    for (Party.Member m : ui.sess.glob.party.memb.values()) {
+                        Coord2d ppc = m.getc();
+
+                        if (ppc == null) // chars are located in different worlds
+                            continue;
+
+                        if(ui.sess.glob.party.memb.size() == 1) //don't do anything if you don't have a party
+                            continue;
+
+
+                            final Coord mc = new Coord2d(ppc).floor(tilesz);
+                            final Coord gc = xlate(new Location(ploc.seg, ploc.tc.add(mc.sub(pc).div(MapFileWidget.scalef()))));
+                            ignore.add(m.gobid);
+                            if (gc != null) {
+                                Gob gob = m.getgob();
+
+                                if (gob == null){//party member not in draw distance, draw a party colored X instead.
+                                    Tex tex = xmap.get(m.col);
+                                    if(tex == null){
+                                        tex = Text.renderstroked("\u2716",  m.col, m.col, Text.num12boldFnd).tex();
+                                        xmap.put(m.col, tex);
+                                    }
+                                    g.chcolor(m.col);
+                                    g.image(tex, gc.sub(psz.div(2)), psz);
+                                    Tex nametex = namemap.get(m.gobid);
+                                    if(nametex != null) { //if we have a nametex for this gobid because we've seen them before, go ahead and apply it
+                                        g.chcolor(Color.WHITE);
+                                        g.image(nametex, gc.sub(psz.div(2).add(new Coord(-5,-10))));
+                                    }
+                                    continue;
+                                }
+                                angle = gob.geta();
+                                final Coord front = new Coord(8, 0).rotate(angle).add(gc);
+                                final Coord right = new Coord(-5, 5).rotate(angle).add(gc);
+                                final Coord left = new Coord(-5, -5).rotate(angle).add(gc);
+                                final Coord notch = new Coord(-2, 0).rotate(angle).add(gc);
+                                KinInfo kin = gob.getattr(KinInfo.class);
+
+                                    Tex tex = namemap.get(m.gobid);
+                                    if (tex == null && kin != null) { //if we don't already have this nametex in memory, set one up.
+                                        System.out.println("tex null kin not null");
+                                        tex = Text.renderstroked(kin.name, Color.WHITE, Color.BLACK, Text.delfnd2).tex();
+                                       // tex = kin.rendered();
+                                        namemap.put(m.gobid, tex);
+                                    }
+                                    if(tex != null) { //apply texture if it's been successfully setup.
+                                        g.chcolor(Color.WHITE);
+                                        g.image(tex, gc.sub(psz.div(2).add(new Coord(-5,-10))));
+                                    }
+
+
+                                g.chcolor(m.col);
+                                g.poly(front, right, notch, left);
+                                g.chcolor(Color.BLACK);
+                                g.polyline(1, front, right, notch, left);
+                                g.chcolor();
+                            }
+
+                    }
+                }
+            } catch (Loading l) {
+                //Fail silently
+            }
+            return ignore;
+        }
+
+        /**
+         * Ideally this will be a line -> X -> line -> X
+         * Where X is some icon for destinations
+         * Start at map.moveto
+         * Then follow map.movequeue
+         * XXX: does it need an icon?
+         */
+        private void drawmovement(GOut g, final Location ploc) {
+            final Coord pc = new Coord2d(mv.getcc()).floor(tilesz);
+            final Coord2d movingto = mv.movingto();
+            final Iterator<Coord2d> queue = mv.movequeue();
+            Coord last;
+            if (movingto != null) {
+                //Make the line first
+                g.chcolor(Color.MAGENTA);
+                final Coord cloc = xlate(ploc);
+                last = xlate(new Location(ploc.seg, ploc.tc.add(movingto.floor(tilesz).sub(pc).div(scalef()))));
+                if(last != null && cloc != null) {
+                    g.dottedline(cloc, last, 2);
+                    if (queue.hasNext()) {
+                        while (queue.hasNext()) {
+                            final Coord next = xlate(new Location(ploc.seg, ploc.tc.add(queue.next().floor(tilesz).sub(pc).div(scalef()))));
+                            if(next != null) {
+                                g.dottedline(last, next, 2);
+                                last = next;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
         public void draw(GOut g) {
             g.chcolor(0, 0, 0, 128);
             g.frect(Coord.z, sz);
             g.chcolor();
             super.draw(g);
             try {
+                final Location loc = resolve(player);
                 Coord ploc = xlate(resolve(player));
                 if (ploc != null) {
                     g.chcolor(255, 0, 0, 255);
                     g.image(plx, ploc.sub(plx.sz().div(2)));
+                    final Set<Long> ignore;
+                    if(Config.mapdrawparty)
+                        ignore = drawparty(g, loc);
                     g.chcolor();
+                    drawmovement(g.reclip(view.c, view.sz), loc);
                 }
             } catch (Loading l) {
             }
@@ -215,8 +330,35 @@ public class MapWnd extends Window {
         }
     }
 
+    public void resolveNames(){//used to load name textures even while the map is closed
+        try {
+            synchronized (ui.sess.glob.party) {
+                for (Party.Member m : ui.sess.glob.party.memb.values()) {
+                    Coord2d ppc = m.getc();
+                    if (ppc == null) // chars are located in different worlds
+                        continue;
+                    if(ui.sess.glob.party.memb.size() == 1) //don't do anything if you don't have a party
+                        continue;
+                    Gob gob = m.getgob();
+                    if (gob != null){
+                        KinInfo kin = gob.getattr(KinInfo.class);
+                        Tex tex = namemap.get(m.gobid);
+                        if (tex == null && kin != null) { //if we don't already have this nametex in memory, set one up.
+                            tex = Text.renderstroked(kin.name, Color.WHITE, Color.BLACK, Text.delfnd2).tex();
+                            namemap.put(m.gobid, tex);
+                        }
+                    }
+                }
+            }
+        } catch (Loading l) {
+            //Fail silently
+        }
+    }
+
     public void tick(double dt) {
         super.tick(dt);
+        if(Config.mapdrawparty)
+            resolveNames();
         synchronized (deferred) {
             for (Iterator<Runnable> i = deferred.iterator(); i.hasNext(); ) {
                 Runnable task = i.next();
@@ -267,7 +409,7 @@ public class MapWnd extends Window {
 
     @SuppressWarnings("unchecked")
     private Dropbox<Pair<String, String>> markersFilter() {
-        Dropbox<Pair<String, String>> modes = new Dropbox<Pair<String, String>>(200 - 10, filters.length, Math.max(Text.render(filters[0].a.toString()).sz().y, 16)) {
+        Dropbox<Pair<String, String>> modes = new Dropbox<Pair<String, String>>(195, filters.length, Math.max(Text.render(filters[0].a.toString()).sz().y, 20)) {
             @Override
             protected Pair<String, String> listitem(int i) {
                 return filters[i];

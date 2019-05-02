@@ -81,6 +81,7 @@ import java.util.TreeMap;
 import javax.imageio.ImageIO;
 
 public class Resource implements Serializable {
+    public static Resource fake = new Resource(null, "fake", -1);
 	private static ResCache prscache;
 	public static ThreadGroup loadergroup = null;
 	private static Map<String, LayerFactory<?>> ltypes = new TreeMap<String, LayerFactory<?>>();
@@ -133,6 +134,7 @@ public class Resource implements Serializable {
 			ret = (ret * 31) + ver;
 			return (ret);
 		}
+	public String name() { return name; }
 	}
 
 	public static class Spec extends Named implements Serializable {
@@ -369,9 +371,7 @@ public class Resource implements Serializable {
 			return ("#<Resource " + res.name + ">");
 		}
 
-		public boolean canwait() {
-			return (true);
-		}
+	public boolean canwait() {return(true);}
 
 		public void waitfor() throws InterruptedException {
 			synchronized (res) {
@@ -397,9 +397,8 @@ public class Resource implements Serializable {
 
 		public Pool(Pool parent, ResSource... sources) {
 			this.parent = parent;
-			for (ResSource source : sources) {
-;				this.sources.add(source);
-			}
+	    for(ResSource source : sources)
+		this.sources.add(source);
 		}
 
 		public Pool(ResSource... sources) {
@@ -535,9 +534,12 @@ public class Resource implements Serializable {
 					Queued cq = queued.get(name);
 					if (cq != null) {
 			if(ver != -1) {
-				if(ver < cq.ver) {
-				throw(new LoadException(String.format("Weird version number on %s (%d > %d)", cq.name, cq.ver, ver), null));
-				} else if(ver == cq.ver) {
+				if(ver < cq.ver) { //who cares, don't kill the client over this...
+					//throw(new LoadException(String.format("Weird version number on %s (%d > %d)", cq.name, cq.ver, ver), null));
+					cq.boostprio(prio);
+					return (cq);
+				}
+ 				else if(ver == cq.ver) {
 				cq.boostprio(prio);
 				return(cq);
 				}
@@ -582,13 +584,8 @@ public class Resource implements Serializable {
 			return (ret);
 		}
 
-		public Named load(String name, int ver) {
-			return (load(name, ver, -5));
-		}
-
-		public Named load(String name) {
-			return (load(name, -1));
-		}
+	public Named load(String name, int ver) {return(load(name, ver, -5));}
+	public Named load(String name) {return(load(name, -1));}
 
 		public Indir<Resource> dynres(long id) {
 			return (load(String.format("dyn/%x", id), 1));
@@ -942,7 +939,7 @@ public class Resource implements Serializable {
 	@LayerName("image")
 	public class Image extends Layer implements Comparable<Image>, IDLayer<Integer> {
 		public transient BufferedImage img;
-		transient private Tex tex;
+	transient private TexI tex;
 		public final int z, subz;
 		public final boolean nooff;
 		public final int id;
@@ -978,6 +975,16 @@ public class Resource implements Serializable {
 			};
 			return (tex);
 		}
+	public synchronized TexI texi() {
+	    if(tex != null)
+		return(tex);
+	    tex = new TexI(img) {
+		public String toString() {
+		    return("TexI(" + Resource.this.name + ", " + id + ")");
+		}
+	    };
+	    return(tex);
+	}
 
 		private boolean detectgay() {
 			for (int y = 0; y < sz.y; y++) {
@@ -1040,14 +1047,15 @@ public class Resource implements Serializable {
 	@LayerName("neg")
 	public class Neg extends Layer {
 		public Coord cc;
-		public Coord ac, bc;
+	public Coord bc, bs, sz;
 		public Coord[][] ep;
 
 		public Neg(Message buf) {
 			cc = cdec(buf);
-			ac = cdec(buf);
 			bc = cdec(buf);
-			buf.skip(4);
+	    bs = cdec(buf);
+	    sz = cdec(buf);
+	    //buf.skip(12);
 			ep = new Coord[8][0];
 			int en = buf.uint8();
 			for (int i = 0; i < en; i++) {
@@ -1059,8 +1067,7 @@ public class Resource implements Serializable {
 			}
 		}
 
-		public void init() {
-		}
+	public void init() {}
 	}
 
 	@LayerName("anim")
@@ -1110,7 +1117,19 @@ public class Resource implements Serializable {
 		public final Named parent;
 		public final char hk;
 		public final String[] ad;
-		public final String origName;
+	public AButton(Named parent, String name) {
+	    this.name = name;
+	    this.parent = parent;
+	    ad = null;
+	    hk = '\0';
+	}
+
+	public AButton(Named parent, String name, char h) {
+	    this.name = name;
+	    this.parent = parent;
+	    ad = null;
+	    hk = h;
+	}
 
 		public AButton(Message buf) {
 			String pr = buf.string();
@@ -1125,8 +1144,7 @@ public class Resource implements Serializable {
 				}
 			}
 
-			origName = buf.string();
-			name = Resource.getLocString(Resource.BUNDLE_ACTION, super.getres(), origName);
+	    name = buf.string();
 
 			buf.string(); /* Prerequisite skill */
 			hk = (char) buf.uint16();
@@ -1135,8 +1153,7 @@ public class Resource implements Serializable {
 				ad[i] = buf.string();
 		}
 
-		public void init() {
-		}
+	public void init() {}
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -1177,9 +1194,7 @@ public class Resource implements Serializable {
 		public String toString() {
 			return ("cl:" + Resource.this.toString());
 		}
-	}
-
-	;
+    }
 
 	public static Resource classres(final Class<?> cl) {
 		return(AccessController.doPrivileged(new PrivilegedAction<Resource>() {
@@ -1535,8 +1550,9 @@ public class Resource implements Serializable {
 		List<Layer> layers = new LinkedList<Layer>();
 		if (this.ver == -1)
 			this.ver = ver;
-		else if (ver != this.ver)
+	else if(ver != this.ver ) {
 			throw (new LoadException("Wrong res version (" + ver + " != " + this.ver + ")", this));
+	}
 		while (!in.eom()) {
 			LayerFactory<?> lc = ltypes.get(in.string());
 			int len = in.int32();
@@ -1560,9 +1576,7 @@ public class Resource implements Serializable {
 		if (indir != null)
 			return (indir);
 		class Ret extends Named implements Serializable {
-			Ret(String name, int ver) {
-				super(name, ver);
-			}
+	    Ret(String name, int ver) {super(name, ver);}
 
 			public Resource get() {
 				return (Resource.this);
@@ -1578,6 +1592,27 @@ public class Resource implements Serializable {
 
 	public static BufferedImage loadimg(String name) {
 		return (local().loadwait(name).layer(imgc).img);
+	}
+	public static BufferedImage loadimg(final String name, final int id) {
+		final Resource res = local().loadwait(name);
+		final Collection<Image> imgs = res.layers(imgc);
+		for(Image img : imgs) {
+			if(img.id == id) {
+				return img.img;
+			}
+		}
+		throw new RuntimeException("Failed to find img for " + name + " - id: " + id);
+	}
+
+	public static Tex loadtex(final String name, final int id) {
+		final Resource res = local().loadwait(name);
+		final Collection<Image> imgs = res.layers(imgc);
+		for(Image img : imgs) {
+			if(img.id == id) {
+				return img.tex();
+			}
+		}
+		throw new RuntimeException("Failed to find tex for " + name + " - id: " + id);
 	}
 
 	public static Tex loadtex(String name) {

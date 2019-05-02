@@ -34,6 +34,7 @@ import java.util.Map;
 import haven.MorphedMesh.Morpher;
 import haven.Skeleton.Pose;
 import haven.Skeleton.PoseMod;
+import haven.DefSettings;
 
 public class SkelSprite extends Sprite implements Gob.Overlay.CUpd, Skeleton.HasPose {
     public static final GLState
@@ -61,7 +62,7 @@ public class SkelSprite extends Sprite implements Gob.Overlay.CUpd, Skeleton.Has
         }
     };
 
-    private SkelSprite(Owner owner, Resource res, Message sdt) {
+    protected SkelSprite(Owner owner, Resource res, Message sdt) {
         super(owner, res);
         skel = res.layer(Skeleton.Res.class).s;
         pose = skel.new Pose(skel.bindpose);
@@ -212,9 +213,15 @@ public class SkelSprite extends Sprite implements Gob.Overlay.CUpd, Skeleton.Has
     }
 
     public Object staticp() {
-        if(!stat || (manims.length > 0) || (ipold > 0))
+        if (!Config.disableAllAnimations) {
+            if (!stat || (manims.length > 0) || (ipold > 0)) {
             return(null);
+            } else {
         return(Gob.SemiStatic.class);
+    }
+        } else {
+            return Gob.STATIC;
+        }
     }
 
     public Pose getpose() {
@@ -222,6 +229,10 @@ public class SkelSprite extends Sprite implements Gob.Overlay.CUpd, Skeleton.Has
     }
 
     static {
-        Console.setscmd("bonedb", (cons, args) -> bonedb = Utils.parsebool(args[1], false));
+        Console.setscmd("bonedb", new Console.Command() {
+            public void run(Console cons, String[] args) {
+                bonedb = Utils.parsebool(args[1], false);
+            }
+        });
     }
 }

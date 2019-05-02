@@ -26,11 +26,22 @@
 
 package haven;
 
+import haven.sloth.gfx.GridMesh;
+import haven.sloth.script.pathfinding.Tile;
+
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class MCache {
+    //All for hitmaps/pathfinding
+    private static final Pattern deepwater = Pattern.compile("(gfx/tiles/deep)|(gfx/tiles/odeep)|(gfx/tiles/odeeper)");
+    private static final Pattern shallowater = Pattern.compile("(gfx/tiles/water)|(gfx/tiles/owater)");
+    private static final Pattern cave = Pattern.compile("(gfx/tiles/cave)|(gfx/tiles/rocks/.+)");
+    private static final Tile[] id2tile = new Tile[256];
+
+    //
     public static final Coord2d tilesz = new Coord2d(11, 11);
     public static final Coord tilesz2 = tilesz.round(); /* XXX: Remove me in due time. */
     public static final Coord cmaps = new Coord(100, 100);
@@ -43,12 +54,12 @@ public class MCache {
     private final Reference<Tileset>[] csets = new Reference[256];
     @SuppressWarnings("unchecked")
     private final Reference<Tiler>[] tiles = new Reference[256];
-    Map<Coord, Request> req = new HashMap<Coord, Request>();
-    Map<Coord, Grid> grids = new HashMap<Coord, Grid>();
+    Map<Coord, Request> req = new HashMap<>();
+    final Map<Coord, Grid> grids = new HashMap<>();
     Session sess;
-    Set<Overlay> ols = new HashSet<Overlay>();
+    Set<Overlay> ols = new HashSet<>();
     public int olseq = 0;
-    Map<Integer, Defrag> fragbufs = new TreeMap<Integer, Defrag>();
+    Map<Integer, Defrag> fragbufs = new TreeMap<>();
 
     public static class LoadingMap extends Loading {
         public final Coord gc;
@@ -105,6 +116,7 @@ public class MCache {
         public final int tiles[] = new int[cmaps.x * cmaps.y];
         public final int z[] = new int[cmaps.x * cmaps.y];
         public final int ol[] = new int[cmaps.x * cmaps.y];
+        public final Tile hitmap[] = new Tile[cmaps.x * cmaps.y];
         public final Coord gc, ul;
         public long id;
         public int seq = -1;
@@ -145,6 +157,14 @@ public class MCache {
             cuts = new Cut[cutn.x * cutn.y];
 	    for(int i = 0; i < cuts.length; i++)
                 cuts[i] = new Cut();
+        }
+
+        public Tile gethitmap(Coord tc) {
+            return hitmap[tc.x + (tc.y * cmaps.x)];
+        }
+
+        public void sethitmap(Coord tc, Tile t) {
+            hitmap[tc.x + (tc.y * cmaps.x)] = t;
         }
 
         public int gettile(Coord tc) {
@@ -285,7 +305,6 @@ public class MCache {
         Random rnd = new Random(id);
 	    cut.dgrid = Defer.later(new Defer.Callable<FastMesh>() {
 		public FastMesh call() {
-		  //  return(GridMesh.build(MCache.this, ul.add(cc.mul(cutsz)), cutsz));
 		    return(GridMesh.build(MCache.this,ul.add(cc.mul(cutsz)),cutsz));
 		}
 
@@ -372,9 +391,21 @@ public class MCache {
                 String resnm = blob.string();
                 int resver = blob.uint16();
                 nsets[tileid] = new Resource.Spec(Resource.remote(), resnm, resver);
+
+                if (shallowater.matcher(resnm).matches()) {
+                    id2tile[tileid] = Tile.SHALLOWWATER;
+                } else if (deepwater.matcher(resnm).matches()) {
+                    id2tile[tileid] = Tile.DEEPWATER;
+                } else if (cave.matcher(resnm).matches()) {
+                    id2tile[tileid] = Tile.CAVE;
             }
-	    for(int i = 0; i < tiles.length; i++)
+            }
+            for (int i = 0; i < tiles.length; i++) {
                 tiles[i] = blob.uint8();
+
+                //we can figure out shallow vs deep hitmap from this info, ridges will come later
+                hitmap[i] = id2tile[tiles[i]];
+            }
 	    for(int i = 0; i < z.length; i++)
                 z[i] = blob.int16();
 	    for(int i = 0; i < ol.length; i++)
@@ -403,6 +434,8 @@ public class MCache {
                         ol = 32;
                     else
                         ol = 16;
+        } else if(type == 3) {
+            ol = 64;
                 } else {
 		    throw(new RuntimeException("Unknown plot type " + type));
                 }
@@ -431,10 +464,10 @@ public class MCache {
 
     public void invalidateAll() {
         synchronized (grids) {
-            for(final Grid g : grids.values()) {
+            for (final Grid g : grids.values()) {
                 g.invalidate();
-	    }
-	}
+            }
+        }
     }
 
     public void invalidate(Coord cc) {
@@ -480,8 +513,24 @@ public class MCache {
                     return Optional.empty();
                 }
             }
+	    return Optional.of(cached);
+	}
+    }
+
+    public Optional<Grid> getgrido(final long id) {
+	synchronized(grids) {
+	    if ((cached == null) || cached.id != id) {
+		for (Grid g : grids.values()) {
+		    if (g.id == id) {
+			cached = g;
+			return Optional.of(g);
+		    }
+		}
+		return Optional.empty();
+	    } else {
             return Optional.of(cached);
         }
+    }
     }
 
     public Grid getgridt(Coord tc) {
@@ -500,6 +549,21 @@ public class MCache {
         } else {
             return 0;
         }
+    }
+
+    public Tile gethitmap(Coord tc) {
+        final Optional<Grid> g = getgridto(tc);
+        if (g.isPresent()) {
+            return g.get().gethitmap(tc.sub(g.get().ul));
+        } else {
+            return null;
+        }
+    }
+
+    public void sethitmap(Coord tc, Tile t) {
+        getgridto(tc).ifPresent(g -> {
+            g.sethitmap(tc.sub(g.ul), t);
+        });
     }
 
     public int gettile(Coord tc) {
@@ -522,6 +586,15 @@ public class MCache {
         }
     }
 
+    public double getcz_old(double px, double py) {
+        double tw = tilesz.x, th = tilesz.y;
+        Coord ul = new Coord(Utils.floordiv(px, tw), Utils.floordiv(py, th));
+        double sx = Utils.floormod(px, tw) / tw;
+        double sy = Utils.floormod(py, th) / th;
+        return(((1.0f - sy) * (((1.0f - sx) * getz(ul)) + (sx * getz(ul.add(1, 0))))) +
+                (sy * (((1.0f - sx) * getz(ul.add(0, 1))) + (sx * getz(ul.add(1, 1))))));
+    }
+
     public double getcz(double px, double py) {
         double tw = tilesz.x, th = tilesz.y;
         Coord ul = new Coord(Utils.floordiv(px, tw), Utils.floordiv(py, th));
@@ -535,6 +608,10 @@ public class MCache {
         return(getcz(pc.x, pc.y));
     }
 
+    public double getcz_old(Coord2d pc) {
+        return(getcz_old(pc.x, pc.y));
+    } //only exists because follow cam hates the new getz
+
     public float getcz(float px, float py) {
         return((float)getcz((double)px, (double)py));
     }
@@ -546,6 +623,12 @@ public class MCache {
     public Coord3f getzp(Coord2d pc) {
         return(new Coord3f((float)pc.x, (float)pc.y, (float)getcz(pc)));
     }
+
+    public Coord3f getzp_old(Coord2d pc) {
+        return(new Coord3f((float)pc.x, (float)pc.y, (float)getcz_old(pc)));
+    }//only exists because follow cam hates the new getz
+
+
 
     public int getol(Coord tc) {
         Grid g = getgridt(tc);

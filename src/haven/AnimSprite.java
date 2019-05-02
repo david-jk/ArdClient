@@ -26,6 +26,8 @@
 
 package haven;
 
+import haven.sloth.gob.Type;
+
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -40,7 +42,6 @@ public class AnimSprite extends Sprite {
             CheckListboxItem itm = Config.disableanim.get(res.name);
             if (itm != null && itm.selected)
                 return null;
-
             return (new AnimSprite(owner, res, sdt));
         }
     };
@@ -81,6 +82,7 @@ public class AnimSprite extends Sprite {
     }
 
     public boolean tick(int idt) {
+
         boolean ret = false;
         float dt = idt / 1000.0f;
         for (MeshAnim.Anim anim : anims)
@@ -89,6 +91,9 @@ public class AnimSprite extends Sprite {
     }
 
     public Object staticp() {
-        return((anims.length == 0)?CONSTANS:null);
+        if (owner instanceof  Gob)
+            return (((Config.disableAllAnimations && ((Gob) owner).type != Type.HUMAN) || anims.length == 0) ? Gob.STATIC : null);
+        else
+        return ((Config.disableAllAnimations || anims.length == 0) ? Gob.STATIC : null);
     }
 }

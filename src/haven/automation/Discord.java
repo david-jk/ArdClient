@@ -1,7 +1,7 @@
 package haven.automation;
 
 import haven.*;
-import haven.purus.BotUtils;
+import haven.purus.pbot.PBotUtils;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -53,7 +53,6 @@ public class Discord extends ListenerAdapter implements Runnable {
     public String LoadMSG;
     private String stuff;
 
-
     public void run() {
         channels = new ArrayList<>();
         try {
@@ -78,24 +77,26 @@ public class Discord extends ListenerAdapter implements Runnable {
             JDA jda = builder.buildBlocking();
         } catch (LoginException e) {
             e.printStackTrace();
-            BotUtils.sysLogAppend(e.getMessage(), "white");
+            PBotUtils.sysLogAppend(e.getMessage(), "white");
         } catch (InterruptedException e) {
             e.printStackTrace();
-            BotUtils.sysLogAppend(e.getMessage(), "white");
+            PBotUtils.sysLogAppend(e.getMessage(), "white");
         } catch(IllegalStateException e){
             e.printStackTrace();
-            BotUtils.sysLogAppend(e.getMessage(), "white");
+            PBotUtils.sysLogAppend(e.getMessage(), "white");
         }
     }
 
     public static void SwitchMessageFlag(){
+       // System.out.println("switch message flag fired old : "+discordmessage);
         discordmessage = !discordmessage;
+        //System.out.println("new : "+discordmessage);
     }
 
     @Override
     public void onReady(ReadyEvent event) {
         System.out.println("Ready!");
-        BotUtils.sysMsg("Discord Loaded", Color.white);
+        PBotUtils.sysMsg("Discord Loaded", Color.white);
         readytogo = true;
         jdalogin = event.getJDA();
         tempchannels = jdalogin.getTextChannels();
@@ -193,7 +194,7 @@ public class Discord extends ListenerAdapter implements Runnable {
         String msg = message.getContentDisplay();
         channelfinal = event.getChannel();
 
-        System.out.println("Channelfinal = : " + channelfinal.getName());
+       // System.out.println("Channelfinal = : " + channelfinal.getName());
 
 
         String[] SplitMessage = msg.split(" ");
@@ -262,7 +263,6 @@ public class Discord extends ListenerAdapter implements Runnable {
                                 ((ChatUI.MultiChat) w).send(author.getName() + ": " + msg);
                             gui.chat.notify((ChatUI.MultiChat) w, sentmsg);
                             ((ChatUI.MultiChat) w).updurgency(1);
-                            System.out.println("Discord message : "+discordmessage);
                             break;
                         }
                     }

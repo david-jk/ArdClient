@@ -26,9 +26,12 @@
 
 package haven;
 
-import haven.purus.BotUtils;
 
-import java.awt.*;
+import haven.purus.pbot.PBotUtils;
+import haven.sloth.gob.HeldBy;
+import haven.sloth.gob.Hidden;
+import haven.sloth.gob.Holding;
+
 import java.util.*;
 import java.util.List;
 
@@ -84,6 +87,25 @@ public class OCache implements Iterable<Gob> {
         ob.changed();
         for(ChangeCallback cb : cbs)
             cb.changed(ob);
+    }
+
+    synchronized void changeAllGobs() {
+        for(final Gob g : this) {
+            changed(g);
+        }
+    }
+
+    synchronized void refreshalloverlays(){
+        for(final Gob g: this){
+            if(g.ols.size() > 0)
+              g.ols.clear();
+        }
+    }
+
+    public class ModdedGob extends Virtual {
+        public ModdedGob(Coord2d c, double a) {
+            super(c, a);
+        }
     }
 
     public synchronized void remove(long id, int frame) {
@@ -224,6 +246,7 @@ public class OCache implements Iterable<Gob> {
         if ((d != null) && (d.res == res) && !d.sdt.equals(sdt) && (d.spr != null) && (d.spr instanceof Gob.Overlay.CUpd)) {
             ((Gob.Overlay.CUpd) d.spr).update(sdt);
             d.sdt = sdt;
+            g.updsdt();
         } else if ((d == null) || (d.res != res) || !d.sdt.equals(sdt)) {
             g.setattr(new ResDrawable(g, res, sdt));
         }
@@ -329,7 +352,8 @@ public class OCache implements Iterable<Gob> {
 
     public synchronized void cmppose(Gob g, int pseq, List<ResData> poses, List<ResData> tposes, boolean interp, float ttime) {
         Composite cmp = (Composite) g.getattr(Drawable.class);
-        if (cmp != null && cmp.pseq != pseq) {
+        if (cmp != null) {
+            if (cmp.pseq != pseq) {
             cmp.pseq = pseq;
             if (poses != null)
                 cmp.chposes(poses, interp);
@@ -337,6 +361,7 @@ public class OCache implements Iterable<Gob> {
                 cmp.tposes(tposes, WrapMode.ONCE, ttime);
         }
         changed(g);
+    }
     }
 
     public void cmppose(Gob gob, Message msg) {
@@ -451,6 +476,14 @@ public class OCache implements Iterable<Gob> {
             cmpequ(gob, equ);
     }
 
+    synchronized void changeHealthGobs() {
+        for(Gob g : this) {
+            if(g.getattr(GobHealth.class) != null &&
+                    g.getattr(GobHealth.class).hp < 4)
+                changed(g);
+        }
+    }
+
     public synchronized void avatar(Gob g, List<Indir<Resource>> layers) {
         Avatar ava = g.getattr(Avatar.class);
         if (ava == null) {
@@ -510,6 +543,12 @@ public class OCache implements Iterable<Gob> {
     public synchronized void follow(Gob g, long oid, Indir<Resource> xfres, String xfname) {
         if (oid == 0xffffffffl) {
             g.delattr(Following.class);
+            final HeldBy heldby = g.getattr(HeldBy.class);
+            if (heldby != null) {
+                g.delattr(HeldBy.class);
+                g.updateHitmap();
+                heldby.holder.delattr(Holding.class);
+            }
         } else {
             Following flw = g.getattr(Following.class);
             if (flw == null) {
@@ -617,19 +656,15 @@ public class OCache implements Iterable<Gob> {
                             DamageSprite dmgspr = gobdmgs.get(g.id);
                             if (dmgspr == null) {
                                 if(Config.logcombatactions) {
-                                    int blue = Fightsess.blue;
-                                    int red = Fightsess.red;
-                                    int myblue = Fightsess.myblue;
-                                    int myred = Fightsess.myred;
                                     KinInfo kininfo = g.getattr(KinInfo.class);
                                     if (g.isplayer())
-                                        BotUtils.sysLogAppend("I got hit for " + dmg + " Damage. I had " + myblue + " blue opening and " + myred + " red opening.", "white");
+                                        PBotUtils.sysLogAppend("I got hit for " + dmg + " Damage.", "white");
                                     else if (kininfo != null)
-                                        BotUtils.sysLogAppend("Hit " + kininfo.name + " For " + dmg + " Damage. Had " + blue + " blue opening and " + red + " red opening.", "green");
+                                        PBotUtils.sysLogAppend("Hit " + kininfo.name + " For " + dmg + " Damage.", "green");
                                     else if (g.getres().basename().contains("Body"))
-                                        BotUtils.sysLogAppend("Hit Unknown player For " + dmg + " Damage. Had " + blue + " blue opening and " + red + " red opening.", "green");
+                                        PBotUtils.sysLogAppend("Hit Unknown player For " + dmg + " Damage.", "green");
                                     else
-                                        BotUtils.sysLogAppend("Hit " + g.getres().basename() + " For " + dmg + " Damage. Had " + blue + " blue opening and " + red + " red opening.", "green");
+                                        PBotUtils.sysLogAppend("Hit " + g.getres().basename() + " For " + dmg + " Damage.", "green");
                                 }
                                 gobdmgs.put(g.id, new DamageSprite(dmg, clr == 36751, g));
                                 }
@@ -699,6 +734,67 @@ public class OCache implements Iterable<Gob> {
         if (gob != null)
             health(gob, hp);
     }
+
+    public synchronized void highlightGobs(final String gname) {
+        for(final Gob g : this) {
+            g.resname().ifPresent(name -> {
+                if(gname.equals(name)) {
+                    g.mark(-1);
+                }
+            });
+        }
+    }
+
+    public synchronized void unhighlightGobs(final String gname) {
+        for(final Gob g : this) {
+            g.resname().ifPresent(name -> {
+                if(gname.equals(name)) {
+                    g.unmark();
+                }
+            });
+        }
+    }
+
+    synchronized void hideAll(final String name) {
+        for(final Gob g : this) {
+            g.resname().ifPresent(gname -> {
+                if(gname.equals(name)) {
+                    g.setattr(new Hidden(g));
+                    changed(g);
+                }
+            });
+        }
+    }
+
+    public synchronized void unhideAll(final String name) {
+        for(final Gob g : this) {
+            g.resname().ifPresent(gname -> {
+                if(gname.equals(name)) {
+                    g.delattr(Hidden.class);
+                    changed(g);
+                }
+            });
+        }
+    }
+
+    synchronized void removeAll(final String name) {
+        //TODO: I2 iterator doesn't support remove and I should fix that later on, for now this is a two step process
+        final List<Long> rem = new ArrayList<>();
+        for(final Gob g : this) {
+            g.resname().ifPresent(gname -> {
+                if(gname.equals(name)) {
+                    g.dispose();
+                    rem.add(g.id);
+                }
+            });
+        }
+
+        for(long id : rem) {
+            remove(id);
+        }
+    }
+
+
 
     public synchronized void buddy(Gob g, String name, int group, int type) {
         if (name == null) {

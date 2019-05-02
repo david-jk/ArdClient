@@ -26,6 +26,8 @@
 
 package haven;
 
+import com.jogamp.opengl.util.awt.Screenshot;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.GraphicsConfiguration;
@@ -39,26 +41,12 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.awt.event.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.TreeMap;
-
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLCapabilitiesChooser;
-import javax.media.opengl.GLContext;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
-
-import com.jogamp.opengl.util.awt.Screenshot;
+import java.util.*;
+import javax.media.opengl.*;
+import javax.media.opengl.awt.*;
 
 public class HavenPanel extends GLCanvas implements Runnable, Console.Directory {
     UI ui;
@@ -67,7 +55,8 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
     public static int w, h;
     public boolean bgmode = false;
     public static long bgfd = Utils.getprefi("bghz", 200);
-    long fd = 10, fps = 0;
+    public static long fd = Utils.getprefi("hz", 10);
+    long fps = 0;
     double uidle = 0.0, ridle = 0.0;
     Queue<InputEvent> events = new LinkedList<InputEvent>();
     private String cursmode = "tex";
@@ -363,7 +352,10 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
         }
 
         if (Config.showfps) {
-            FastText.aprintf(g, new Coord(w, 0), 1, 0, "FPS: %d (%d%%, %d%% idle)", fps, (int)(uidle * 100.0), (int)(ridle * 100.0));
+            FastText.aprint(g, new Coord(HavenPanel.w - 50, 15), 0, 1, "FPS: " + fps);
+            if(ui.gui != null && ui.gui.map != null) {
+                FastText.aprintf(g, new Coord(w, 30), 1, 0, "%.2f units/s", ui.gui.map.speed());
+            }
         }
 
         if (Config.dbtext) {
@@ -500,6 +492,7 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
                 glconf.pref.save();
                 glconf.pref.dirty = false;
             }
+            DefSettings.checkForDirty();
             f.doneat = System.currentTimeMillis();
         }
     }
@@ -690,6 +683,7 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
         cmdmap.put("hz", new Console.Command() {
             public void run(Console cons, String[] args) {
                 fd = 1000 / Integer.parseInt(args[1]);
+                Utils.setprefi("hz", (int) fd);
             }
         });
         cmdmap.put("bghz", new Console.Command() {

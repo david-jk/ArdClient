@@ -6,8 +6,9 @@ import haven.*;
 import haven.Label;
 import haven.Utils;
 import haven.Window;
-import haven.purus.BotUtils;
 import haven.purus.pbot.PBotAPI;
+import haven.purus.pbot.PBotGobAPI;
+import haven.purus.pbot.PBotUtils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -36,10 +37,12 @@ public class MinerAlert extends Window {
     public List<Gob> slimecount = new ArrayList<>();
     private static final Resource goldsfx = Resource.local().loadwait("sfx/Zelda");
     private static final Resource silversfx = Resource.local().loadwait("sfx/gold");
-    public Boolean audiomute;
+    private static final Resource supportalertsfx = Resource.local().loadwait("custom/sfx/omni/Z_OOT_Navi_WatchOut");
+    private Boolean audiomute, SupportAlertHalf = false, SupportAlertQuarter = false; // quarter is 25% damage, half is 50% damage
+    private CheckBox SupportsQuarter, SupportsHalf;// quarter is 25% damage, half is 50% damage
 
     public MinerAlert(GameUI gui) {
-        super(new Coord(170, 240), "Miner Alert");
+        super(new Coord(220, 300), "Miner Alert");
         this.gui = gui;
         int yvalue = 17;
         int yvalue2 = 8;
@@ -95,52 +98,54 @@ public class MinerAlert extends Window {
         labelcountslimestotal = new Label("0", Text.num12boldFnd, Color.WHITE);
         add(labelcountslimestotal, new Coord(65, yvalue+=20));
 
+        SupportsQuarter = new CheckBox("Stop Mining at <25% HP Supports"){
+            {
+                a = SupportAlertQuarter;
+            }
 
+            public void set(boolean val) {
+                SupportAlertQuarter = val;
+                a = val;
+            }
+        };
+        add(SupportsQuarter,10,yvalue+=20);
+        SupportsHalf = new CheckBox("Stop Mining at <50% HP Supports"){
+            {
+                a = SupportAlertHalf;
+            }
+
+            public void set(boolean val) {
+                SupportAlertHalf = val;
+                a = val;
+            }
+        };
+        add(SupportsHalf,10,yvalue+=20);
         runbtn = new Button(100, "Run") {
             @Override
             public void click() {
-                // this.hide();
-                // cbtn.show();
-                // stopbtn.show();
                 terminate = false;
-                // labelcountiron.settext("");
                 runner = new Thread(new MinerAlert.runner(), "Miner Alert");
                 runner.start();
             }
         };
-       // add(runbtn, new Coord(35, 440));
 
         stopbtn = new Button(100, "Stop") {
             @Override
             public void click() {
-                //BotUtils.sysMsg("Stopping",Color.white);
-                // this.hide();
-                // runbtn.show();
                 cbtn.show();
                 terminate = true;
             }
         };
-        //add(stopbtn, new Coord(35, 470));
 
         mutebtn = new Button(100, "Mute") {
             @Override
             public void click() {
-                if(audiomute)
-                    audiomute = false;
-                else
-                    audiomute = true;
-                BotUtils.sysMsg("Mute status : "+audiomute,Color.white);
+                audiomute = !audiomute;
+                PBotUtils.sysMsg("Mute status : "+audiomute,Color.white);
             }
         };
         add(mutebtn, new Coord(35, yvalue+=20));
-
-        ActionListener timedevent = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                runbtn.click();
-            }
-        };  new javax.swing.Timer(delay,timedevent).start();
-
+        runbtn.click();
     }
 
 
@@ -148,32 +153,56 @@ public class MinerAlert extends Window {
     private class runner implements Runnable {
         @Override
         public void run() {
-            while (!terminate) {
+            while (gui.getwnd("Miner Alert") != null) {
+                PBotUtils.sleep(5000);//sleep 5 seconds every iteration, no reason to update more than once every 5 seconds.
                 try {
+                    if(PBotAPI.gui == null || PBotAPI.gui.ui == null)
+                        break;
+
                     countiron = 0;
                     countgold = 0;
                     countsilver = 0;
-                    MCache mcache = gui.map.glob.map;
                     Glob g = gui.map.glob;
                     Gob player = gui.map.player();
-                    List<Gob> allGobs = PBotAPI.getGobs();
+                    List<Gob> allGobs = PBotUtils.getGobs();
                     List<Gob> list = new ArrayList<>();
-
+                    List<Gob> supportlist = new ArrayList<>();
 
                     for (int i = 0; i < allGobs.size(); i++) {
                         try {
+                            if(allGobs.get(i).type.toString().contains("SUPPORT"))
+                                supportlist.add(allGobs.get(i));
                             Resource res = allGobs.get(i).getres();
-                            if (allGobs.get(i).getres().name.endsWith("greenooze") && !allGobs.get(i).knocked) {
+                            if (res.name.endsWith("greenooze") && !allGobs.get(i).isDead()) {
                                 list.add(allGobs.get(i));
                                 if (!slimecount.contains(allGobs.get(i)))
                                     slimecount.add(allGobs.get(i));
                             }
-                        } catch (NullPointerException | Loading e) {
-                        }
+                        } catch (NullPointerException | Loading e) { }
                     }
                     countslimes = list.size();
-                    // Gob player = ((plgob < 0) ? null : glob.oc.getgob(plgob));
+                    while(PBotUtils.player() == null)
+                        PBotUtils.sleep(10); //sleep if player is null, teleporting through a road?
                     Coord pltc = new Coord((int) player.getc().x / 11, (int) player.getc().y / 11);
+
+                    if(SupportAlertHalf || SupportAlertQuarter){//if support alerts toggled, resolve mine supports and HP
+                        for(Gob support : supportlist) {
+                            double distFromPlayer = support.rc.dist(PBotUtils.player().rc);
+                            if (distFromPlayer <= 13 * 11) {    //support is less than or equal to 13 tiles from current player position, check it's HP
+                                if(support.getattr(GobHealth.class) != null && support.getattr(GobHealth.class).hp <= 2 && SupportAlertHalf){
+                                    PBotUtils.sysMsg("Detected mine support at 50% or less HP",Color.white);
+                                        Audio.play(supportalertsfx);
+                                    if(PBotGobAPI.player().getPoses().contains("gfx/borka/choppan") || PBotGobAPI.player().getPoses().contains("gfx/borka/pickan"))
+                                        PBotAPI.gui.ui.root.wdgmsg("gk",27);
+                                }else if(support.getattr(GobHealth.class) != null && support.getattr(GobHealth.class).hp <= 1 && SupportAlertQuarter){
+                                    PBotUtils.sysMsg("Detected mine support at 25% or less HP less than 13 tiles away",Color.white);
+                                    Audio.play(supportalertsfx);
+                                    if(PBotGobAPI.player().getPoses().contains("gfx/borka/choppan") || PBotGobAPI.player().getPoses().contains("gfx/borka/pickan"))
+                                        PBotAPI.gui.ui.root.wdgmsg("gk",27);
+                                }
+                            }
+                        }
+                    }
 
                     for (int x = -44; x < 44; x++) {
                         for (int y = -44; y < 44; y++) {
@@ -256,7 +285,7 @@ public class MinerAlert extends Window {
                         double now = Utils.rtime();
                         if (now - lasterror > 45) {
                             lasterror = now;
-                            BotUtils.sysMsg("Gold Visible on screen!!", Color.green);
+                            PBotUtils.sysMsg("Gold Visible on screen!!", Color.green);
                             if (!audiomute)
                                 Audio.play(goldsfx);
                         }
@@ -264,23 +293,24 @@ public class MinerAlert extends Window {
                     if (countcinnabar > 0) {
                         double now = Utils.rtime();
                         if (now - lasterror > 45) {
-                            BotUtils.sysMsg("Cinnabar visible on screen!!", Color.green);
+                            PBotUtils.sysMsg("Cinnabar visible on screen!!", Color.green);
                             lasterror = now;
                         }
                     }
                     if (countsilver > 0) {
                         double now = Utils.rtime();
                         if (now - lasterror > 15) {
-                            BotUtils.sysMsg("Silver visible on screen!!", Color.green);
-                            if (!audiomute)
+                            PBotUtils.sysMsg("Silver visible on screen!!", Color.green);
+                            if (!audiomute) {
                                 Audio.play(silversfx);
+                            }
                             lasterror = now;
                         }
                     }
                     if (countslimes > 0) {
                         double now = Utils.rtime();
                         if (now - lasterror > 15) {
-                            BotUtils.sysLogAppend("Slime number spawned : " + list.size(), "white");
+                            PBotUtils.sysLogAppend("Slime number spawned : " + list.size(), "white");
                             lasterror = now;
                         }
                     }
@@ -293,8 +323,10 @@ public class MinerAlert extends Window {
                     countmagnetite = 0;
                     countcinnabar = 0;
                     countslimes = 0;
-                    stopbtn.click();
-                }catch(Loading lolloadingerrors){}
+                }catch(Exception lolloadingerrors){
+                    lolloadingerrors.printStackTrace();
+                    reqdestroy();
+                }
             }
         }
     }
@@ -306,6 +338,11 @@ public class MinerAlert extends Window {
         else
             super.wdgmsg(sender, msg, args);
     }
+
+    public void close(){
+        reqdestroy();
+    }
+
     @Override
     public boolean type(char key, KeyEvent ev) {
         if (key == 27) {
@@ -315,11 +352,6 @@ public class MinerAlert extends Window {
         }
         return super.type(key, ev);
     }
-    public void terminate() {
-        terminate = true;
-        if (runner != null)
-            runner.interrupt();
-        this.destroy();
-    }
+
 }
 

@@ -34,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class Session implements Resource.Resolver {
-    public static final int PVER = 17;
+    public static final int PVER = 18;
 
     public static final int MSG_SESS = 0;
     public static final int MSG_REL = 1;
@@ -359,6 +359,12 @@ public class Session implements Resource.Resolver {
                 int resver = msg.uint16();
                 QualityLogger.logResMapping(resid,resname,resver);
                 cachedres(resid).set(resname, resver);
+                try {
+                    cachedres(resid).set(resname, resver);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+             //   cachedres(resid).set(resname, resver);
             } else if (msg.type == RMessage.RMSG_PARTY) {
                 glob.party.msg(msg);
             } else if (msg.type == RMessage.RMSG_SFX) {
@@ -688,6 +694,7 @@ public class Session implements Resource.Resolver {
         ticker.start();
 
         Arrays.stream(LOCAL_CACHED).forEach(this::cacheres);
+        Config.setUserName(username);
     }
 
     private void sendack(int seq) {
