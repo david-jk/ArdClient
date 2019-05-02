@@ -386,6 +386,11 @@ public class UI {
             }
             id = rwidgets.get(sender);
         }
+        if(rcvr != null) {
+            String aStr="";
+            for(Object obj : args)aStr+="'"+(obj==null? "null" : obj.toString())+"' ";
+            System.out.println("wdgmsg \""+msg+"\" to "+id+" with args "+aStr);
+        }
         if(rcvr != null)
             rcvr.rcvmsg(id, msg, args);
     }
