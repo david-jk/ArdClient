@@ -43,6 +43,7 @@ class ScriptCommunicator {
              this.s=s;
              mc=new MessageConnection(s,this);
              firstLiveMessageIndex=events.size();
+             System.out.println("Scripting system connected.");
          }
 
          public void run() {
@@ -64,6 +65,8 @@ class ScriptCommunicator {
                 }
             }
             catch(Exception ex) {}
+
+            System.out.println("Scripting system disconnected.");
 
             synchronized(currentClientCount) {
                  currentClientCount--;
