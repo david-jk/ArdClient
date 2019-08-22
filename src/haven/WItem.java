@@ -437,13 +437,10 @@ public class WItem extends Widget implements DTarget {
 			if(ui.modctrl && ui.modshift) {
 				locked = !locked;
 				return true;
-			}else if(ui.modctrl){
-				item.wdgmsg("iact", c, ui.modflags());
 			} else if (ui.modmeta && !(parent instanceof Equipory)) {
 				wdgmsg("transfer-identical-asc", this.item);
 			}
-			else
-				item.wdgmsg("iact", c, ui.modflags());
+			else item.wdgmsg("iact", c, ui.modflags());
 			return (true);
 		}
 		return (false);
