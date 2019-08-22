@@ -74,7 +74,7 @@ public class LoginScreen extends Widget {
     }
 
     private void showChangeLog() {
-        log = ui.root.add(new Window(new Coord(50, 50), "Changelog"), new Coord(100, 50));
+        /*log = ui.root.add(new Window(new Coord(50, 50), "Changelog"), new Coord(100, 50));
         log.justclose = true;
         Textlog txt = log.add(new Textlog(new Coord(450, 500)));
         txt.quote = false;
@@ -97,7 +97,7 @@ public class LoginScreen extends Widget {
             in.close();
         } catch(IOException ignored) {
         }
-        txt.setprog(0);
+        txt.setprog(0);*/
     }
 
     private static abstract class Login extends Widget {
@@ -418,7 +418,7 @@ public class LoginScreen extends Widget {
         }
         return (super.type(k, ev));
     }
-    
+
     private void StartUpdaterThread() {
         Thread statusupdaterthread = new Thread(new Runnable() {
             public void run() {
@@ -445,7 +445,7 @@ public class LoginScreen extends Widget {
 					e.printStackTrace();
 				} catch(InterruptedException e) {
 					e.printStackTrace();
-				} 
+				}
             }
         });
         statusupdaterthread.start();
